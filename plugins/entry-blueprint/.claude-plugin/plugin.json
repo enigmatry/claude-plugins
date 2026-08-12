@@ -7,13 +7,5 @@
   "repository": "https://github.com/enigmatry/claude-plugins",
   "homepage": "https://github.com/enigmatry/claude-plugins",
   "license": "MIT",
-  "keywords": ["dotnet", "angular", "vertical-slice", "code-review", "a11y", "testing", "jira", "azure-devops"],
-  "userConfig": {
-    "azure_devops_org": {
-      "type": "string",
-      "title": "Azure DevOps organization",
-      "description": "Your Azure DevOps organization name (e.g. enigmatry)",
-      "required": true
-    }
-  }
+  "keywords": ["dotnet", "angular", "vertical-slice", "code-review", "a11y", "testing", "jira", "azure-devops"]
 }

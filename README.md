@@ -2,6 +2,10 @@
 
 Claude Code plugin marketplace by [Enigmatry](https://github.com/enigmatry).
 
+> **Private repository** — this marketplace is private to the Enigmatry GitHub
+> organization. Installing requires access to `enigmatry/claude-plugins` and
+> working git credentials (see [Private repo access](#private-repo-access)).
+
 ## Plugins
 
 ### entry-blueprint
@@ -40,7 +44,7 @@ It blocks at most once per batch of changes (loop-guarded via `stop_hook_active`
 
 The plugin ships three MCP servers used by the workflow skills:
 
-- `azure-devops` — [@azure-devops/mcp](https://www.npmjs.com/package/@azure-devops/mcp); the organization name is requested at install time (plugin user config)
+- `azure-devops` — [@azure-devops/mcp](https://www.npmjs.com/package/@azure-devops/mcp) for the `enigmatry` organization
 - `atlassian` — Atlassian remote MCP via `mcp-remote`
 - `Context7` — documentation lookup (restricted to `query-docs`, `resolve-library-id`)
 
@@ -66,6 +70,24 @@ project's `CLAUDE.md`. Add one like this:
 /plugin marketplace add enigmatry/claude-plugins
 /plugin install entry-blueprint@enigmatry
 ```
+
+### Private repo access
+
+Claude Code clones this marketplace with your local git credentials. Make sure
+they work non-interactively:
+
+```sh
+gh auth login          # once, if not already authenticated
+gh auth setup-git      # configures git's credential helper to use gh
+```
+
+SSH keys or another git credential helper work too. Note that `GH_TOKEN`/
+`GITHUB_TOKEN` environment variables alone are **not** picked up by background
+marketplace updates — a configured credential helper is required.
+
+Optional hardening: set `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` so a
+failed background update (e.g. after credential rotation) keeps the existing
+local marketplace clone instead of discarding it.
 
 ### Team auto-install
 

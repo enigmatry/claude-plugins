@@ -1,0 +1,12 @@
+{
+  "name": "enigmatry",
+  "owner": { "name": "Enigmatry", "url": "https://github.com/enigmatry" },
+  "description": "Claude Code plugins by Enigmatry",
+  "plugins": [
+    {
+      "name": "entry-blueprint",
+      "source": "./plugins/entry-blueprint",
+      "description": ".NET + Angular vertical-slice coding standards, testing, a11y, code-review and Jira/Azure DevOps workflow skills for Enigmatry Entry Blueprint projects"
+    }
+  ]
+}

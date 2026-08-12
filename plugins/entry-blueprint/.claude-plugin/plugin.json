@@ -1,0 +1,19 @@
+{
+  "name": "entry-blueprint",
+  "displayName": "Enigmatry Entry Blueprint",
+  "version": "1.0.0",
+  "description": "Skills, workflows, MCP servers and a code-review Stop hook for .NET 9 + Angular vertical-slice projects built on the Enigmatry Entry Blueprint",
+  "author": { "name": "Enigmatry", "url": "https://github.com/enigmatry" },
+  "repository": "https://github.com/enigmatry/claude-plugins",
+  "homepage": "https://github.com/enigmatry/claude-plugins",
+  "license": "MIT",
+  "keywords": ["dotnet", "angular", "vertical-slice", "code-review", "a11y", "testing", "jira", "azure-devops"],
+  "userConfig": {
+    "azure_devops_org": {
+      "type": "string",
+      "title": "Azure DevOps organization",
+      "description": "Your Azure DevOps organization name (e.g. enigmatry)",
+      "required": true
+    }
+  }
+}

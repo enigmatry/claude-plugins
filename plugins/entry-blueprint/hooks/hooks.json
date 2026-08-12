@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "statusMessage": "Checking entry-blueprint code-review gate...",
+            "timeout": 30,
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/code-review-gate.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,76 +1,29 @@
 ---
 name: azure-devops-pipelines
-description: Best practices for Azure DevOps Pipeline YAML files in the Enigmatry Entry Blueprint project. Use this when creating, editing, or reviewing Azure DevOps CI/CD pipeline YAML.
+description: Best practices for Azure DevOps Pipeline YAML files in the project. Use this when creating, editing, or reviewing Azure DevOps CI/CD pipeline YAML.
 ---
 
-# Blueprint Azure DevOps Pipelines
+# Azure DevOps Pipelines
 
-## Pipeline files
+All pipeline YAML lives in `Pipelines/`. Read the actual YAML you're editing; this skill only records rules and rationale you can't derive from the files.
 
-All pipeline YAML lives in `Pipelines/`:
+## Shared templates
 
-| File | Purpose |
-|------|---------|
-| `azure-pipelines.yml` | Main CI/CD pipeline — build → deploy |
-| `run-all-tests.yml` | Runs all test suites |
-| `code-analysis.yml` | Static analysis |
-| `build-publish-nuget.yml` | NuGet package publishing |
-| `deploy-to-stage.yml` | Reusable deployment job template |
-| `variables/` | Per-environment variable files |
-
-Shared pipeline templates are consumed from the `enigmatry-azure-pipelines-templates` repository via a `resources.repositories` reference — do not inline template logic that already exists there.
-
-## Key variables
+Reusable pipeline templates are consumed from the **`enigmatry-azure-pipelines-templates`** repository — do not inline template logic that already exists there:
 
 ```yaml
-variables:
-  artifactName: 'enigmatry-entry-blueprint-template'
-  dbContextName: 'AppDbContext'
-  nodeVersion: '22.17.1'
-  projectNameAngularApp: enigmatry-entry-blueprint-app
-  projectNamePrefix: Enigmatry.Entry.Blueprint
-  majorMinorVersion: 1.0
-```
-
-## Build stage
-
-The build uses the shared `build-angular-app-and-dotnet-api.yml` template:
-
-```yaml
-- template: build-angular-app-and-dotnet-api.yml@templates
-  parameters:
-    artifactName: $(artifactName)
-    nodeVersion: $(nodeVersion)
-    projectNameAngularApp: $(projectNameAngularApp)
-    projectNamePrefix: $(projectNamePrefix)
-    runAngularTests: true
-    useSlnx: true
-    dbContextNames:
-    - $(dbContextName)
-```
-
-## Deployment stage
-
-Deployments use the `deploy-to-stage.yml` template and are gated on branch conditions:
-
-```yaml
-- stage: Deploy_Test
-  dependsOn: ci_build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  variables:
-  - template: variables/variables.test.yml
-  jobs:
-  - template: deploy-to-stage.yml
-    parameters:
-      environment: test
-      serviceConnection: 'Enigmatry - Entry Template (Test)'
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: Enigmatry - Azure Pipelines Templates/enigmatry-azure-pipelines-templates
 ```
 
 ## Rules
 
-- Use `variables/variables.<env>.yml` files for environment-specific config — never inline environment values.
+- **The `BP-XYZ` placeholder in the `Deploy_Test` condition must stay a placeholder on `master`.** It's a temporary manual switch for deploying a *feature* branch to Test: replace it with your branch's ticket ID on that branch, queue the build, then restore `BP-XYZ` before merging. **Reviewers: reject any PR that merges a real ticket ID in that condition.** Because the pipeline triggers on every branch, a real ID landing on `master` makes every push to any branch containing that ID deploy to Test until someone reverts it.
+- When adding a new EF Core `DbContext`, add its name to the `dbContextNames` list passed to the build template (currently one: `AppDbContext`).
+- Environment-specific config goes in `Pipelines/variables/variables.<env>.yml` — never inline environment values in stages.
 - Never hardcode secrets or connection strings in YAML — use variable groups or Azure Key Vault references.
 - Keep `nodeVersion` in sync with `package.json` engines.
-- When adding a new `dbContext`, add it to the `dbContextNames` list in the build template call.
-- Use `batch: true` on triggers to avoid redundant builds for rapid pushes.
-
+- Keep `batch: true` on triggers to avoid redundant builds for rapid pushes.

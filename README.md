@@ -23,6 +23,7 @@ vertical-slice projects built on the
 | `entry-blueprint:csharp-unit-tests` | C# tests: NUnit, FluentAssertions, NSubstitute, Verify |
 | `entry-blueprint:typescript-coding-standards` | Any TypeScript file: naming, type system, async, architecture |
 | `entry-blueprint:angular-unit-testing` | Angular Jest spec files |
+| `entry-blueprint:generating-e2e-tests` | Playwright e2e specs: page objects, API teardown, shared-environment safety |
 | `entry-blueprint:a11y` | UI components and templates: WCAG 2.2 Level AA |
 | `entry-blueprint:azure-devops-pipelines` | Azure DevOps pipeline YAML |
 | `entry-blueprint:code-review-blueprint` | Reviewing changes before declaring work done |

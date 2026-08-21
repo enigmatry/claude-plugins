@@ -1,6 +1,6 @@
 ---
 name: angular
-description: Angular component, directive and service authoring — signals API, standalone defaults, inject() DI, member visibility, artifact file suffixes, lifecycle hooks and their replacements, control-flow blocks and @for track selection, async work via resource() and toSignal(), the RxJS boundary, forms, selectors, i18n and error surfacing. Use this when writing or reviewing Angular components, services, directives or the TypeScript side of templates, including generators that emit them. Spec files are covered by angular-testing; markup structure and SCSS by frontend-styling.
+description: Angular authoring conventions, written modern-first for Angular 20+ (signals, standalone, inject(); NgModule-era notes cover repos mid-migration) — member visibility, artifact file suffixes, lifecycle hooks and their replacements, control-flow blocks and @for track selection, async work via resource() and toSignal(), the RxJS boundary, forms, selectors, i18n and error surfacing. Use this when writing or reviewing Angular components, services, directives, pipes, interceptors, guards, resolvers or the TypeScript side of templates, including generators that emit them. Spec files are covered by angular-testing; markup structure and SCSS by frontend-styling.
 ---
 
 # Angular
@@ -229,35 +229,14 @@ focus, scroll position and in-flight animations.
 
 **Tier 3 is not free.** `$index` makes keys positional, so a reused row receives
 a *different item*. Any component inside that row must reset its per-item state
-when its input changes — not only on destroy:
-
-```ts
-effect(() => {
-  const current = this.model();
-  clearTimeout(this.timer);
-  this.frames = [];
-  this.render(current);
-});
-```
+(timers, buffers, rendered output) when its input changes — an `effect()` on the
+input, not only cleanup on destroy.
 
 ## Forms
 
-- Typed `FormControl<T>` over untyped; it removes most casts. Initialize a static
-  readonly control with `{ value: x, disabled: true }`.
-- `patchValue()` against a typed model is the classic place Angular's types will
-  not line up. Use the double cast `typescript` allows —
-  `value as unknown as typeof this.form.value` — never `as any`.
-- Bind with `formControlName` / `formArrayName` / `formGroupName`.
-- Validation display reads form state directly in the template — that is the
-  sanctioned exception to *no calls in a template* (`frontend-styling`), because
-  classic form state is not a signal:
-  `@if (form.controls.field.hasError('required')) { <mat-error>…</mat-error> }`.
-- Server-side validation errors are pushed back onto the form, not shown as a
-  toast — use the project's `setServerSideValidationErrors`-style helper and its
-  form-errors component.
-- Custom validators live in one shared location, not beside each feature.
-- Form configuration (Formly, codegen) belongs in the configuration, not in the
-  component.
+Working on a form — typed controls, `patchValue` casts, validation display,
+server-side errors, Signal Forms? **Read `references/forms.md`** before writing;
+it carries the rules.
 
 ## Error handling
 

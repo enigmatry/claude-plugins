@@ -1,6 +1,6 @@
 ---
 name: typescript
-description: Framework-agnostic TypeScript 5.x+ / ES2022 conventions — casing and sigils, file and declaration layout, the type system and the one allowed cast, class method style, async/await and error handling, constants, and module and public-API boundaries. Use this when writing or reviewing any .ts file, in any project, with or without a UI framework. Framework-specific patterns are not here — for Angular components, templates, DI, RxJS and artifact file suffixes see angular; for spec files see angular-testing.
+description: Framework-agnostic TypeScript conventions for codebases on TypeScript 5.x+ compiling to ES2022+ as pure ES modules — that baseline is required, not preferred. Covers casing and sigils, file and declaration layout, the type system and the allowed casts, class method style, async/await and error handling, constants, and module and public-API boundaries. Use this when writing or reviewing any .ts file in a project on that baseline, with or without a UI framework. Framework-specific patterns are not here — for Angular components, templates, DI, RxJS and artifact file suffixes see angular; for spec files see angular-testing.
 ---
 
 # TypeScript
@@ -50,12 +50,21 @@ per file. The TypeScript delta:
 ## Type system
 
 - **No `any`, implicit or explicit.** Use `unknown` plus narrowing.
-- **The one allowed cast.** When a third-party API forces a genuine structural
-  mismatch that no narrowing can bridge, double-cast through `unknown`:
-  `value as unknown as Target`. This is the named exception to
-  `frontend-foundations` → *no unchecked `as`*: it is loud, greppable, and
-  confined to a library boundary. **Never `as any`**, and never reach for it to
-  paper over a type you could narrow.
+- **Allowed casts — the complete list.** These are the only two named exceptions
+  to `frontend-foundations` → *no unchecked `as`*; any other `as` is a finding,
+  stated reason or not. Downstream skills reference these — they never broaden
+  them.
+  1. **The `unknown` double-cast at a library boundary.** When a third-party API
+     forces a genuine structural mismatch that no narrowing can bridge:
+     `value as unknown as Target`. It is loud, greppable, and confined to that
+     boundary.
+  2. **The spec-only private-member cast.** In a `.spec.ts` file, a cast to a
+     declared type to reach a private member — permitted only when the logic is
+     complex enough to warrant direct access (`angular-testing` owns the
+     conditions).
+
+  **Never `as any`** in either form, and never reach for a cast to paper over a
+  type you could narrow.
 - Discriminated unions for state machines and event types.
 - Centralize shared contracts; do not duplicate shapes.
 - Express intent with utility types — `Readonly`, `Partial`, `Record`,

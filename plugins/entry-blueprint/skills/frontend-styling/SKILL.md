@@ -18,28 +18,11 @@ the wiki wins.
 ## Reuse before you write
 
 **Before writing any mixin, function, utility class or breakpoint, check
-`@enigmatry/scss-foundation`** —
-<https://github.com/enigmatry/entry-angular-building-blocks/tree/master/libs/scss-foundation>.
-Adding a near-duplicate locally is the most common styling mistake in these
-repos. Under `src/modules/`:
-
-| Module | Provides |
-|---|---|
-| `borders/border-radius` | `partial-border-radius()` |
-| `display/items` | display/flex item helpers |
-| `layout/grid`, `layout/grid-core` | `generate()`, `generate-reverse-row()` — the grid system |
-| `lists/row-coloring` | `row-coloring()`, `odd-row-coloring()`, `even-row-coloring()` |
-| `position/absolute`, `fixed`, `set-position` | `position()`, `set-position()`, `position-unset()` |
-| `responsiveness/breakpoints` | `apply-on()`, `show-on-mobile()`, `show-on-tablet()` — **the** breakpoint API |
-| `sizes/set-size` | `box-definition()`, `box-dimensions()` |
-| `states/hover`, `states/visibility` | `background-hover()`, visibility toggles |
-| `text/hover`, `text/modification` | `font-hover()`, `ellipsis()`, `capitalize()` |
-| `typography/fonts` | `define-font()` |
-
-Plus utility classes from `src/partials/core/`: `.align-center`, `.align-right`,
-`.align-vertical`, `.space-between`, `.stack-vertical`, `.capitalized`,
-`.first-letter-capitalized`, `.clickable`, `.draggable`, `.forbidden`,
-`.no-resize`, `.hidden`.
+`@enigmatry/scss-foundation`.** Adding a near-duplicate locally is the most
+common styling mistake in these repos. The full catalogue — every module, mixin
+and utility class it provides — is in
+**`references/scss-foundation-catalog.md`**; read it before writing anything
+new.
 
 If something is *almost* right, extend it in `scss-foundation` (with a test) —
 do not fork it into a component.
@@ -74,8 +57,9 @@ long names.
 - **`a-z` and hyphens only** — no numbers, no special characters, no
   underscores, no PascalCase.
 - **Class selectors only.** No id selectors, no attribute selectors. The single
-  exception is base HTML-element styling in the general styles (see hierarchy
-  below), and those files contain *no* class selectors — never mix the two.
+  exception is base HTML-element styling in the general styles (see
+  `references/global-styles-hierarchy.md`), and those files contain *no* class
+  selectors — never mix the two.
 
 **No category prefixes.** SMACSS conventionally tags categories with `l-`,
 `is-` and `theme-`; we do not — they are abbreviations and filler, which the
@@ -174,23 +158,9 @@ needs a written reason.
 ## Styles folder hierarchy
 
 Component styles live beside their component. Everything global lives under a
-single `styles/` folder, and **only `main.scss` compiles** — every other file is
-a partial prefixed with `_`.
-
-| Folder | Holds |
-|---|---|
-| `modules/` | **utilities only** — mixins, functions, variables. No styles. |
-| `partials/` | **styles only**, invoking the utilities from `modules/` |
-| `partials/core/` | app-wide classes: `layouts/`, `states/`, grid, global padding |
-| `partials/core/elements/` | base HTML-element styles — the **only** files with element selectors, and no class selectors in them |
-| `partials/polyfills/` | browser/device-specific styles — every `-moz-*` / `-webkit-*` rule belongs here |
-| `partials/vendors/libraries/` | vendor SCSS utilities used to generate global styles |
-| `partials/vendors/overrides/` | global vendor overrides (rule 1 above) |
-
-**Every subfolder in `partials/` has an `_index.scss` containing only
-`@use`/`@forward`** for the files beside it — same as `main.scss`. That is what
-makes a block of styling easy to switch off and then delete cleanly, which
-happens often over a project's life.
+single `styles/` folder — adding or reorganizing anything there? **Read
+`references/global-styles-hierarchy.md`** for the folder layout, the
+only-`main.scss`-compiles rule and the `_index.scss` convention.
 
 ## SCSS module system
 

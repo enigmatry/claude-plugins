@@ -72,7 +72,9 @@ inspect the first diff rather than trusting `-u`.
 1. **`done` does not exist.** Vitest has no done callback; a test is synchronous
    or returns a promise. Every `it('…', (done: jest.DoneCallback) => { … })`
    becomes `async`. For an `HttpTestingController` assertion that used `done`,
-   the flush is synchronous anyway — drop the callback and assert inline.
+   trigger the request with `firstValueFrom` (never a bare `.subscribe()` — the
+   parent skill's rule binds here too), assert on the pending request, `flush`,
+   and `await` the promise last.
 
    ```ts
    // Jest
@@ -81,11 +83,12 @@ inspect the first diff rather than trusting `-u`.
    });
 
    // Vitest
-   it('adds the header to API requests', () => {
-     http.get('/api/thing').subscribe();
+   it('adds the header to API requests', async () => {
+     const response = firstValueFrom(http.get('/api/thing'));
      const request = httpMock.expectOne('/api/thing');
      expect(request.request.headers.get('X-Custom')).toBe('value');
      request.flush({});
+     await response;
    });
    ```
 

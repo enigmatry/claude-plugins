@@ -15,7 +15,7 @@ the ones the diff touches rather than working from memory.
 |---|---|
 | anything | `frontend-foundations` |
 | `.ts` | `typescript` |
-| components, services, templates | `angular` |
+| components, services, directives, pipes, interceptors, guards, resolvers, templates | `angular` |
 | `.html`, `.scss` | `frontend-styling` |
 | user-facing UI | `a11y` |
 | specs | `angular-testing` |
@@ -48,6 +48,9 @@ Rank every finding and report the most severe first.
 - Readability, naming, logic that could be simplified
 - Optimization with no functional impact
 - Minor convention deviations
+- An `a11y` rule tagged *(house rule)* violated in a project that has not
+  adopted it as its own standard — unmarked `a11y` rules are WCAG failures and
+  stay IMPORTANT
 - A missing doc comment on an exported symbol **of a package whose reference
   docs are generated** — not on public members generally
 
@@ -62,8 +65,9 @@ Check each step against the loaded skill, not from memory.
 3. **Security** — secrets, PII in logs, unvalidated input, unsanitized HTML.
 4. **Failure handling** — empty catch, `void` on a promise, log-and-continue, a
    duplicate notification for an error already handled globally.
-5. **Suppressions** — every new `any`, `as`, `!`, `@ts-*` or lint disable needs a
-   named rule and a stated reason.
+5. **Suppressions** — every new `any`, `!`, `@ts-*` or lint disable needs a
+   named rule and a stated reason. A new `as` must be one of the casts
+   `typescript` allows — anything else is a finding, reason or not.
 6. **Framework conventions** — `angular`'s bans and requirements: structural
    directives, `@for` track stability, DI style, decorators, `async` hooks,
    `OnPush`, selector prefix.

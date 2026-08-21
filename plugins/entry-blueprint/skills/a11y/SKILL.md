@@ -8,6 +8,12 @@ description: Accessibility — WCAG 2.2 Level AA conformance for user-facing UI.
 > Read `frontend-foundations` first. `frontend-styling` owns SCSS architecture
 > and the token system; this file owns what those styles must achieve.
 
+**Normative vs house rules.** An unmarked rule in this file is a WCAG 2.2 AA
+conformance requirement — in review, a violation is 🟡 IMPORTANT per
+`frontend-code-review`. A rule tagged ***(house rule)*** goes beyond normative
+WCAG: follow it when writing, but in review flag a violation as a 🟢 suggestion
+unless the host project has adopted the rule as its own standard.
+
 ## Non-negotiables
 
 - Conform to [WCAG 2.2 Level AA](https://www.w3.org/TR/WCAG22/). Go beyond
@@ -39,8 +45,9 @@ description: Accessibility — WCAG 2.2 Level AA conformance for user-facing UI.
 ## Structure and semantics
 
 - Landmarks — `header`, `nav`, `main`, `footer` — used for what they mean.
-- Headings introduce sections and never skip a level. **One `h1` per page**,
-  normally the first heading inside `main`.
+- Headings introduce sections and never skip a level. **One `h1` per page**
+  *(house rule — WCAG permits multiple `h1`s)*, normally the first heading
+  inside `main`.
 - A descriptive `<title>`, formatted "Unique page - section - site".
 
 ## Keyboard and focus
@@ -54,7 +61,10 @@ description: Accessibility — WCAG 2.2 Level AA conformance for user-facing UI.
 
 ### Skip link
 
-Provide one as the first focusable element on the page.
+WCAG 2.4.1 (Bypass Blocks) requires *a* mechanism to skip repeated blocks; a
+skip link as the first focusable element on the page is the house's chosen
+technique *(house rule as to the technique — an equivalent bypass mechanism
+also conforms)*.
 
 ```html
 <header>
@@ -140,7 +150,9 @@ user must not scroll horizontally to read multi-line text.
 
 - Multi-column layouts stack to a single column; text wraps; controls rearrange
   vertically.
-- Content collapsed in the narrow layout must be reachable **within one click**.
+- Content collapsed in the narrow layout must stay available; make it reachable
+  **within one click** *(house rule — WCAG requires availability, not a click
+  budget)*.
 - Responsive primitives with fluid sizing; no fixed widths that force
   two-dimensional scrolling.
 - `max-width: 100%` on images, video, canvas and iframes.
@@ -202,9 +214,9 @@ user must not scroll horizontally to read multi-line text.
 
 Before finishing, explicitly check:
 
-- Landmarks, heading order, one `h1`.
-- Keyboard: operable, visible focus, predictable order, no traps, skip link
-  works.
+- Landmarks, heading order, one `h1` *(house rule)*.
+- Keyboard: operable, visible focus, predictable order, no traps, the bypass
+  mechanism (house standard: skip link) works.
 - Labels visible and contained in accessible names.
 - Forms: labels, required indicators, `aria-invalid` + `aria-describedby`, focus
   moves to the first invalid control.

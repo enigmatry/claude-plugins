@@ -128,8 +128,8 @@ beforeEach(() => {
   leaving an `undefined`-returning stub; `mockRestore` still restores a spied
   original.
 - **Prefer testing behaviour through the public API.** Reach into a private
-  member only when the logic is complex enough to warrant it, and do it with a
-  typed cast, not `any`.
+  member only when the logic is complex enough to warrant it, and do it with the
+  spec-only cast `typescript` allows — a cast to a declared type, never `any`.
 
 ## Test data — bind connected values
 

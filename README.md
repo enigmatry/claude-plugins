@@ -64,11 +64,33 @@ project's `CLAUDE.md`. Add one like this:
 - Default branch: `master`
 ```
 
+### frontend
+
+Seven project-neutral front-end skills distilled from the front-end conventions
+across Enigmatry projects. Layered so a rule lives in exactly one file:
+`frontend-foundations` is the base every other skill points at; `typescript` is
+deliberately framework-free; `angular` carries the framework delta. The set
+picks a side in two places — `async/await` over single-value Observables, and
+Vitest as the standard runner (with a Jest/Jasmine/Karma migration reference).
+See [plugins/frontend/README.md](plugins/frontend/README.md) for the layering
+and how to keep project specifics out of the shared skills.
+
+| Skill | Use for |
+|---|---|
+| `frontend:frontend-foundations` | Every front-end coding or review task: comments, naming, code shape, failure handling, security |
+| `frontend:typescript` | Any `.ts` file, framework or not: type system, async/await, module boundaries |
+| `frontend:angular` | Components, services, directives, templates: signals, standalone, `inject()`, control flow |
+| `frontend:angular-testing` | Spec files on Vitest, incl. migrating a repo off Jest/Jasmine/Karma |
+| `frontend:frontend-styling` | `.html`/`.scss`: semantics, SMACSS naming, SCSS modules, tokens, breakpoints |
+| `frontend:a11y` | User-facing UI: WCAG 2.2 Level AA |
+| `frontend:frontend-code-review` | Reviewing a front-end diff: which skill per file type, severity tiers, what not to flag |
+
 ## Installation
 
 ```
 /plugin marketplace add enigmatry/claude-plugins
 /plugin install entry-blueprint@enigmatry
+/plugin install frontend@enigmatry
 ```
 
 ### Private repo access
@@ -102,7 +124,8 @@ teammate who trusts the repo:
     }
   },
   "enabledPlugins": {
-    "entry-blueprint@enigmatry": true
+    "entry-blueprint@enigmatry": true,
+    "frontend@enigmatry": true
   }
 }
 ```

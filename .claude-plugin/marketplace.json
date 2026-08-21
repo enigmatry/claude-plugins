@@ -7,6 +7,11 @@
       "name": "entry-blueprint",
       "source": "./plugins/entry-blueprint",
       "description": ".NET + Angular vertical-slice coding standards, testing, a11y, code-review and Jira/Azure DevOps workflow skills for Enigmatry Entry Blueprint projects"
+    },
+    {
+      "name": "frontend",
+      "source": "./plugins/frontend",
+      "description": "Project-neutral front-end skills — engineering foundations, TypeScript, Angular, Vitest testing, HTML/SCSS styling, WCAG 2.2 AA accessibility and a code-review harness"
     }
   ]
 }

@@ -1,0 +1,11 @@
+{
+  "name": "frontend",
+  "displayName": "Enigmatry Front-End Skills",
+  "version": "1.0.0",
+  "description": "Seven project-neutral front-end skills — engineering foundations, TypeScript, Angular, Vitest testing, HTML/SCSS styling, WCAG 2.2 AA accessibility and a code-review harness — distilled from the front-end conventions across Enigmatry projects",
+  "author": { "name": "Enigmatry", "url": "https://github.com/enigmatry" },
+  "repository": "https://github.com/enigmatry/claude-plugins",
+  "homepage": "https://github.com/enigmatry/claude-plugins",
+  "license": "MIT",
+  "keywords": ["angular", "typescript", "vitest", "scss", "a11y", "code-review", "frontend"]
+}

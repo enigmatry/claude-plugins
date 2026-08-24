@@ -70,7 +70,7 @@ Every test must be independently runnable, in any order, concurrently with other
 - **Reuse shared seed records for navigation only** — never delete them, never leave them mutated.
 - **Browser selection is a compatibility choice, not isolation.** `--project=chromium`, or a `browserName` skip, does nothing about concurrent Chromium workers, shards, retries, other CI jobs, or another developer on the same environment. Never use it to protect shared state.
 - **Don't reach for `test.describe.configure({ mode: 'serial' })` to protect shared state** — it orders tests within one worker and nothing else.
-- **If mutating a record the test didn't create is genuinely unavoidable**, that needs a real cross-process lock, not a Playwright construct: an ownership token, a version/ETag check on the read-modify-write, guaranteed release in `finally`, and a lease timeout so a crashed run can't wedge the environment. Prefer a per-run tenant or an isolated environment instead — and **ask before introducing either.**
+- **If mutating a record the test didn't create is genuinely unavoidable**, that needs a real cross-process lock, not a Playwright construct: an ownership token, a version/ETag check on the read-modify-write, guaranteed release in `finally`, and a lease timeout so a crashed run can't wedge the environment. A lock only binds writers that take it — a suite, a job, or a developer that doesn't can still read or overwrite the intermediate state, so it lowers the odds rather than removing them. Prefer a per-run tenant or an isolated environment. **Ask before introducing any of the three.**
 - Optional features skip inside the test: `test.skip(!featureAvailable, 'Feature is not enabled in this environment');`.
 
 ## Verify (don't skip)

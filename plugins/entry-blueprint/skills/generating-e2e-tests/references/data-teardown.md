@@ -21,11 +21,15 @@ Arm both watchers synchronously and return their promises. Do **not** `await` ei
 
 Observe the **request** independently of the response. The auth/tenant headers and the create URL come from the request, so the fallback path still has them when the response never arrives or fails to parse — the exact situation the fallback exists to handle.
 
+**Neither promise may reject.** Between arming the capture and awaiting it, the test awaits the click. A fast non-OK response or a JSON failure rejects in that window with no handler attached, and Node reports an unhandled rejection. Retaining the promise is not enough — return a settled result instead, so the failure travels as a value and surfaces where the test reads it.
+
 ```typescript
 interface DispatchedCreate { url: string; headers: Record<string, string> }
-interface CreateCapture {
-  dispatched: Promise<DispatchedCreate | undefined>;  // never rejects
-  response: Promise<CreatedRecord>;
+type CaptureResult = { record: CreatedRecord } | { error: Error };
+
+interface CreateCapture {          // neither promise ever rejects
+  dispatched: Promise<DispatchedCreate | undefined>;
+  result: Promise<CaptureResult>;
 }
 
 armCreateCapture(uniqueKey: string, timeout = 15_000): CreateCapture {
@@ -54,16 +58,22 @@ armCreateCapture(uniqueKey: string, timeout = 15_000): CreateCapture {
       return request && { url: request.url(), headers: await request.allHeaders() };
     })(),
 
-    response: (async () => {
-      const response = await responsePromise;
-      if (!response.ok()) {
-        throw new Error(`Create failed: ${response.status()} ${response.statusText()}`);
+    // Failures travel as a value, never as a rejection nobody is listening to.
+    result: (async (): Promise<CaptureResult> => {
+      try {
+        const response = await responsePromise;
+        if (!response.ok()) {
+          throw new Error(`Create failed: ${response.status()} ${response.statusText()}`);
+        }
+        const body = (await response.json()) as { id?: string };
+        if (!body.id) {
+          throw new Error('Create response did not include an id.');
+        }
+        const request = response.request();
+        return { record: { id: body.id, url: response.url(), headers: await request.allHeaders() } };
+      } catch (error) {
+        return { error: error as Error };
       }
-      const body = (await response.json()) as { id?: string };
-      if (!body.id) {
-        throw new Error('Create response did not include an id.');
-      }
-      return { id: body.id, url: response.url(), headers: await response.request().allHeaders() };
     })(),
   };
 }
@@ -103,20 +113,31 @@ test('adds an item', async ({ itemPage }) => {
 
   capture = itemPage.armCreateCapture(uniqueKey);  // 2. armed and retained
   await itemPage.clickSave();                      // 3. act
-  created = await capture.response;                // 4. resolve for assertions
+  created = expectCreated(await capture.result);   // 4. resolve, rethrowing here
 
   await expect(itemPage.getRow(uniqueKey)).toBeVisible();
 });
 ```
 
-Never assign the capture inside an untracked `.then`. A rejection there is an unhandled rejection, and nothing guarantees the callback ran before teardown reads the variable.
+`expectCreated` turns the captured failure back into a thrown error at the point the test actually reads it, so the message still lands in the test report:
+
+```typescript
+const expectCreated = (result: CaptureResult): CreatedRecord => {
+  if ('error' in result) throw result.error;
+  return result.record;
+};
+```
+
+Never assign the capture inside an untracked `.then`. Nothing guarantees the callback ran before teardown reads the variable.
 
 ## Teardown
 
 ```typescript
 test.afterEach(async ({ request }) => {
-  // The test may have failed before it awaited the capture.
-  const record = created ?? (await capture?.response.catch(() => undefined));
+  // The test may have failed before it awaited the capture. Awaiting the
+  // result is safe here — it resolves either way, so no `.catch` juggling.
+  const settled = await capture?.result;
+  const record = created ?? (settled && 'record' in settled ? settled.record : undefined);
 
   if (record) {
     await deleteItem(request, record, { ignoreMissing: true });

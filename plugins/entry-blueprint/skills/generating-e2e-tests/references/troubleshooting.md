@@ -9,7 +9,8 @@
 | `getByText` / `getByLabel` on a translated string | Breaks the moment the run uses another language. Use a test id. |
 | No per-test timeout on a dialog-heavy flow | Global timeouts are often tight (20–30s) — multi-dialog flows then time out intermittently. Set `60_000`/`90_000` at the top of the describe. |
 | Created a record and left it behind | Shared environment. Arm the capture before the click, retain the promise, await it in teardown even on failure, and fall back to a lookup by unique key. See `data-teardown.md`. |
-| Assigned the capture in a fire-and-forget `.then` | Unhandled rejection if it fails, and nothing guarantees it settled before teardown reads the variable. Retain the promise and await it. |
+| Assigned the capture in a fire-and-forget `.then` | Nothing guarantees it settled before teardown reads the variable. Retain the capture and await it. |
+| Retained a capture promise that can reject | Retaining isn't handling. It can reject during the awaited click, before anything is listening, and Node reports an unhandled rejection. Resolve to a `{ record } \| { error }` result and rethrow where the test reads it. |
 | Matched the create response with `pathname.endsWith(…)` | Also matches unrelated endpoints, and can pick up a concurrent worker's create. Match exact origin + pathname *and* correlate on your unique request value. |
 | Correlated the create with `postData().includes(key)` | Substring matching. It also matches a key that merely contains yours, or one that landed in an unrelated field. Parse the body and compare the intended field for equality. |
 | Teardown guarded only on `if (created)` | A committed create whose response was lost or unparseable skips cleanup silently. Add the fail-closed lookup-by-unique-key fallback. |

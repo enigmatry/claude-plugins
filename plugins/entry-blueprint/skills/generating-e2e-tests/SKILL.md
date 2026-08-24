@@ -66,7 +66,7 @@ A 500-line spec isn't a spec, it's a suite. Split it when you touch it.
 
 Every test must be independently runnable, in any order, concurrently with other runs.
 
-- **Default: each test creates its own records** with unique generated keys and deletes them in teardown. No test depends on data another test made.
+- **Default: each test creates its own records** with unique generated keys and deletes them in teardown. No test depends on data another test made. Keys carry a run marker (`e2e-<runId>-…`) so teardown can prove ownership before deleting and a sweep can find what escaped — see `references/data-teardown.md`.
 - **Reuse shared seed records for navigation only** — never delete them, never leave them mutated.
 - **Browser selection is a compatibility choice, not isolation.** `--project=chromium`, or a `browserName` skip, does nothing about concurrent Chromium workers, shards, retries, other CI jobs, or another developer on the same environment. Never use it to protect shared state.
 - **Don't reach for `test.describe.configure({ mode: 'serial' })` to protect shared state** — it orders tests within one worker and nothing else.

@@ -12,7 +12,7 @@ getRow(text: string): Locator {
 ```
 
 - Scope dialog-only controls so they can't match the page behind the dialog: `page.getByRole('dialog').getByTestId(…)`.
-- Method naming: `clickX()`, `fillX(value)`, `selectX(value)`, `getX(): Locator` for assertions, and `armXCapture(uniqueKey): Promise<CreatedX>` for creates (see `data-teardown.md`).
+- Method naming: `clickX()`, `fillX(value)`, `selectX(value)`, `getX(): Locator` for assertions, and `armXCapture(uniqueKey): CreateCapture` for creates — returns the dispatched-request and response promises without awaiting either (see `data-teardown.md`).
 - Synchronize with `waitForResponse` or `locator.waitFor` — never `waitForTimeout`.
 - **Register it wherever the project wires page objects to tests** — typically the fixtures module: add the property to the fixtures type *and* the fixture body. An unregistered page object is invisible to specs.
 

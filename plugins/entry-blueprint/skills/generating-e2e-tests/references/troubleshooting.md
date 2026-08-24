@@ -11,7 +11,10 @@
 | Created a record and left it behind | Shared environment. Arm the capture before the click, retain the promise, await it in teardown even on failure, and fall back to a lookup by unique key. See `data-teardown.md`. |
 | Assigned the capture in a fire-and-forget `.then` | Unhandled rejection if it fails, and nothing guarantees it settled before teardown reads the variable. Retain the promise and await it. |
 | Matched the create response with `pathname.endsWith(…)` | Also matches unrelated endpoints, and can pick up a concurrent worker's create. Match exact origin + pathname *and* correlate on your unique request value. |
-| Teardown guarded only on `if (created)` | A committed create whose response was lost or unparseable skips cleanup silently. Add the idempotent lookup-by-unique-key fallback. |
+| Correlated the create with `postData().includes(key)` | Substring matching. It also matches a key that merely contains yours, or one that landed in an unrelated field. Parse the body and compare the intended field for equality. |
+| Teardown guarded only on `if (created)` | A committed create whose response was lost or unparseable skips cleanup silently. Add the fail-closed lookup-by-unique-key fallback. |
+| Fallback deletes whatever the lookup returned | It can remove another run's row or a seed record. Require dispatch proof, exact key equality, this run's marker, and exactly one match — throw on anything else. |
+| Fallback given only the unique key | The captured headers live on the response path, which is precisely what failed. Observe the request separately and hand the fallback its URL and auth headers. |
 | Capture promise with no timeout | Teardown awaits it and the run hangs. Always bound it. |
 | Deleted or renamed the shared seed records | They're the records almost every spec navigates to. Only touch records your test created. |
 | Anchored assertions on a shared title/name | A leftover record from a failed or parallel run with the same title can match instead. Anchor on a unique generated value. |

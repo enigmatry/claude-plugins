@@ -19,6 +19,8 @@ If any check fails, report it and stop — do not assign or transition the ticke
 
 ## Jira, then the branch
 
+Read the ticket's current assignee and status **before** changing either, and keep them — they are the only way to undo cleanly if the branch still fails. Note that "no assignee" is a value worth recording, not an absence.
+
 Assign the ticket to yourself and transition it to In Progress. If it's already In Progress, skip the transition but still assign it.
 
 Then branch off the default branch and switch to it:
@@ -31,4 +33,9 @@ Confirm the branch name, assignment, and ticket status to the user.
 
 ## If branch creation fails after the Jira update
 
-Say so explicitly and name the inconsistent state you left behind (ticket assigned and In Progress, no branch). Offer to revert the transition. Never let the user discover the mismatch on their own.
+Say so explicitly and name the inconsistent state you left behind. Then offer to undo **every mutation you actually made**, restoring the assignee and status you recorded above:
+
+- Reassign the ticket to its previous assignee, or unassign it if it had none. This applies even when there was no transition to revert — a ticket that was already In Progress still had its assignee changed.
+- Transition it back to its previous status, if you transitioned it.
+
+Never let the user discover the mismatch on their own.

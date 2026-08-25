@@ -19,7 +19,7 @@ Create the PR in Azure DevOps from the current branch, targeting the default bra
 
 Creating a PR does not set these, and the defaults are wrong for this workflow: Azure DevOps treats an unset merge strategy as no-fast-forward, and an org or project setting can enable auto-complete at creation time without being asked. So after creating the PR, explicitly update it and then **read it back** and confirm:
 
-- `completionOptions.mergeStrategy` is `Squash`.
+- `completionOptions.mergeStrategy` is squash. Compare it case-insensitively: the REST API serializes this enum in camelCase, so a correctly-updated PR reads back as `"squash"`, not the `Squash` spelling used in the portal and the docs. Matching the literal `Squash` reports failure on a PR that is in fact set correctly.
 - `autoCompleteSetBy` is `null` — this workflow completes PRs manually after review. If it came back non-null because a project setting queued it, cancel auto-complete and read back again.
 
 If the read-back doesn't show both, report that plainly instead of claiming success.

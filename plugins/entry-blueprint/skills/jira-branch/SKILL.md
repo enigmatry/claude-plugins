@@ -1,36 +1,41 @@
 ---
 name: jira-branch
-description: Create a git feature branch from a Jira ticket, assigning the ticket to yourself and transitioning it to In Progress. Use this when the user asks to create a new branch and provides (or implies) a Jira ticket ID.
+description: Create a git feature branch from a Jira ticket, assigning the ticket to yourself and transitioning it to In Progress. Use when the user asks to create a branch, start work on a ticket, or pick up a Jira issue, and provides (or implies) a Jira ticket ID.
 ---
 
-# Git Branch from Jira Ticket
+# Branch from Jira Ticket
 
-## Project configuration
+Read the project identifiers (Jira project key, Atlassian cloud ID, default branch) from the **"Known identifiers"** section of the host project's `CLAUDE.md`. If that section is missing, ask the user for them rather than guessing.
 
-First, read the **"Known identifiers"** section of the host project's `CLAUDE.md`
-for:
+## Git preflight — before touching Jira
 
-- **Jira project key** (e.g. `BP`) — used to validate/complete ticket IDs
-- **Atlassian cloud ID** (e.g. `yourcompany.atlassian.net`)
-- **Default branch** — the branch to start from
+Jira mutations aren't automatically reversible, so establish that the branch can actually be created first. These checks are all read-only:
 
-If that section is missing, ask the user for the Jira project key before
-proceeding, and suggest adding a "Known identifiers" section to `CLAUDE.md`.
+1. `git fetch` the default branch, then check whether the local base is behind its remote. If it is, stop and ask the user to pull (or offer to fast-forward) — never branch off a stale base.
+2. Check that no branch for this ticket already exists locally or on the remote. If one does, stop and ask whether to switch to it rather than creating a duplicate.
+3. Check that the working tree is clean enough to switch branches. If uncommitted changes would block the switch, stop and ask how to handle them.
 
-## Workflow
+If any check fails, report it and stop — do not assign or transition the ticket.
 
-1. **Fetch the Jira ticket** by its ID to retrieve its **summary/title** and current status.
-2. **Assign the ticket to yourself**: call `atlassian-atlassianUserInfo` to get your account ID, then `atlassian-editJiraIssue` to set `assignee.accountId`.
-3. **Transition to In Progress** (if not already): call `atlassian-getTransitionsForJiraIssue` to find the "In Progress" transition ID, then `atlassian-transitionJiraIssue` to apply it.
-4. Convert the title to **kebab-case** (lowercase, spaces → hyphens, strip special characters).
-5. Create and switch to the branch: `features/<TICKET-ID>-<kebab-case-title>`
-   - Example: ticket `BP-42` with title "Add product search endpoint" → `features/BP-42-add-product-search-endpoint`
-6. Run `git checkout -b <branch-name>` (or `git switch -c <branch-name>`) to create and immediately switch to it.
-7. Confirm the active branch, assignment, and ticket status to the user.
+## Jira, then the branch
 
-## Rules
+Read the ticket's current assignee and status **before** changing either, and keep them — they are the only way to undo cleanly if the branch still fails. Note that "no assignee" is a value worth recording, not an absence.
 
-- Ticket ID is uppercase as-is (e.g. `BP-42`, not `bp-42`).
-- Kebab-case segment: lowercase only, hyphens instead of spaces/underscores, remove any characters that are not alphanumeric or hyphens.
-- Always assign the ticket and transition it before creating the branch.
-- Skip the transition step (but still assign) if the ticket is already "In Progress".
+Assign the ticket to yourself and transition it to In Progress. If it's already In Progress, skip the transition but still assign it.
+
+Then branch off the default branch and switch to it:
+
+`features/<TICKET-ID>-<kebab-case-keywords>`
+
+The ticket ID stays uppercase. The title segment is **at most 5 keywords** taken from the ticket title — lowercase alphanumerics and hyphens only, filler words dropped. Ticket `BP-42` "Add a product search endpoint to the catalog API" → `features/BP-42-product-search-endpoint`.
+
+Confirm the branch name, assignment, and ticket status to the user.
+
+## If branch creation fails after the Jira update
+
+Say so explicitly and name the inconsistent state you left behind. Then offer to undo **every mutation you actually made**, restoring the assignee and status you recorded above:
+
+- Reassign the ticket to its previous assignee, or unassign it if it had none. This applies even when there was no transition to revert — a ticket that was already In Progress still had its assignee changed.
+- Transition it back to its previous status, if you transitioned it.
+
+Never let the user discover the mismatch on their own.

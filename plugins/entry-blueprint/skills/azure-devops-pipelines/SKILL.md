@@ -1,76 +1,33 @@
 ---
 name: azure-devops-pipelines
-description: Best practices for Azure DevOps Pipeline YAML files in the Enigmatry Entry Blueprint project. Use this when creating, editing, or reviewing Azure DevOps CI/CD pipeline YAML.
+description: Best practices for Azure DevOps Pipeline YAML files in the project. Use this when creating, editing, or reviewing Azure DevOps CI/CD pipeline YAML.
 ---
 
-# Blueprint Azure DevOps Pipelines
+# Azure DevOps Pipelines
 
-## Pipeline files
+All pipeline YAML lives in `Pipelines/`. Read the actual YAML you're editing; this skill only records rules and rationale you can't derive from the files.
 
-All pipeline YAML lives in `Pipelines/`:
+## Shared templates
 
-| File | Purpose |
-|------|---------|
-| `azure-pipelines.yml` | Main CI/CD pipeline — build → deploy |
-| `run-all-tests.yml` | Runs all test suites |
-| `code-analysis.yml` | Static analysis |
-| `build-publish-nuget.yml` | NuGet package publishing |
-| `deploy-to-stage.yml` | Reusable deployment job template |
-| `variables/` | Per-environment variable files |
-
-Shared pipeline templates are consumed from the `enigmatry-azure-pipelines-templates` repository via a `resources.repositories` reference — do not inline template logic that already exists there.
-
-## Key variables
+Reusable pipeline templates are consumed from the **`enigmatry-azure-pipelines-templates`** repository — do not inline template logic that already exists there:
 
 ```yaml
-variables:
-  artifactName: 'enigmatry-entry-blueprint-template'
-  dbContextName: 'AppDbContext'
-  nodeVersion: '22.17.1'
-  projectNameAngularApp: enigmatry-entry-blueprint-app
-  projectNamePrefix: Enigmatry.Entry.Blueprint
-  majorMinorVersion: 1.0
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: Enigmatry - Azure Pipelines Templates/enigmatry-azure-pipelines-templates
 ```
 
-## Build stage
+## File layout
 
-The build uses the shared `build-angular-app-and-dotnet-api.yml` template:
-
-```yaml
-- template: build-angular-app-and-dotnet-api.yml@templates
-  parameters:
-    artifactName: $(artifactName)
-    nodeVersion: $(nodeVersion)
-    projectNameAngularApp: $(projectNameAngularApp)
-    projectNamePrefix: $(projectNamePrefix)
-    runAngularTests: true
-    useSlnx: true
-    dbContextNames:
-    - $(dbContextName)
-```
-
-## Deployment stage
-
-Deployments use the `deploy-to-stage.yml` template and are gated on branch conditions:
-
-```yaml
-- stage: Deploy_Test
-  dependsOn: ci_build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-  variables:
-  - template: variables/variables.test.yml
-  jobs:
-  - template: deploy-to-stage.yml
-    parameters:
-      environment: test
-      serviceConnection: 'Enigmatry - Entry Template (Test)'
-```
+Keep the entry pipeline a thin orchestrator. As it grows, split it into local templates by concern — `build-*.yml`, `deploy-*.yml` — and when any of those passes roughly **200 lines**, split it again along the next natural seam: per stage, per job, or per environment. A file long enough that you have to scroll to find a stage is already too long.
 
 ## Rules
 
-- Use `variables/variables.<env>.yml` files for environment-specific config — never inline environment values.
+- **Never merge a real ticket ID into a branch-gated deploy condition.** Where a `Deploy_*` stage is gated on a ticket-ID placeholder, that placeholder is a temporary manual switch: on your feature branch, substitute your ticket ID to deploy that branch, queue the build, then restore the placeholder before merging. Because the pipeline triggers on every branch, a real ID reaching the default branch makes every push to any branch containing that ID deploy to that environment until someone reverts it. Read the placeholder token, the condition, and the target branch from the repository's own YAML and `CLAUDE.md` — never assume a project's Jira key or default branch name. **Reviewers: reject any PR that merges a real ticket ID into such a condition.**
+- When adding a new EF Core `DbContext`, add its name to the `dbContextNames` list passed to the build template. Read the current list from the YAML — don't assume which contexts are already there.
+- Environment-specific config goes in `Pipelines/variables/variables.<env>.yml` — never inline environment values in stages.
 - Never hardcode secrets or connection strings in YAML — use variable groups or Azure Key Vault references.
 - Keep `nodeVersion` in sync with `package.json` engines.
-- When adding a new `dbContext`, add it to the `dbContextNames` list in the build template call.
-- Use `batch: true` on triggers to avoid redundant builds for rapid pushes.
-
+- Keep `batch: true` on triggers to avoid redundant builds for rapid pushes.

@@ -27,7 +27,7 @@ vertical-slice projects built on the
 | `entry-blueprint:azure-devops-pipelines` | Azure DevOps pipeline YAML |
 | `entry-blueprint:code-review-blueprint` | Reviewing changes before declaring work done |
 | `entry-blueprint:jira-branch` | Creating a git branch from a Jira ticket (assigns + transitions the ticket) |
-| `entry-blueprint:pull-request` | Creating an Azure DevOps PR with Squash merge and auto-complete |
+| `entry-blueprint:pull-request` | Creating an Azure DevOps PR with Squash merge, completed manually after review |
 
 #### Stop hook
 

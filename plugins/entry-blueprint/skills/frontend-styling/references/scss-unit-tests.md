@@ -25,8 +25,9 @@ src/modules/borders/border-radius  →  tests/borders/border-radius.tests.scss
 ## Imports
 
 ```scss
-@use 'sass-true' as true;                       // preferred alias form
-@use '../../src/modules/typography/fonts';      // module under test
+@use 'sass-true' as true;                                  // preferred alias form
+@use '../../src/modules/typography/fonts';                 // module under test
+@use '../../src/modules/borders/border-radius' as border;  // module under test (Structure example)
 @use '../../src/modules/variables' as vars;
 ```
 

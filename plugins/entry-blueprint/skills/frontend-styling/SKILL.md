@@ -1,6 +1,6 @@
 ---
 name: frontend-styling
-description: How HTML markup and SCSS are built at Enigmatry — semantic element choice, template hygiene, SMACSS class naming, reusing scss-foundation before writing anything new, the styles folder hierarchy (modules/partials/core/polyfills/vendors), the SCSS module system and private mixins, class-only selectors and nesting limits, the sanctioned way to override vendor styles instead of ::ng-deep, design tokens, units, mobile-first breakpoints, and the shared Stylelint contract. Use this when writing or reviewing any .html template, .scss or .css file. What that markup must achieve for users — contrast, keyboard, labels, reflow — belongs to a11y.
+description: How HTML markup and SCSS are built at Enigmatry — SMACSS naming, scss-foundation reuse, vendor-override rules, design tokens and mobile-first breakpoints under the shared Stylelint contract. Use this when writing or reviewing any .html template, .scss or .css file. What that markup must achieve for users — contrast, keyboard, labels, reflow — belongs to a11y.
 ---
 
 # Front-End Styling — HTML & SCSS
@@ -17,12 +17,12 @@ the wiki wins.
 
 ## Reuse before you write
 
-**Before writing any mixin, function, utility class or breakpoint, check
-`@enigmatry/scss-foundation`.** Adding a near-duplicate locally is the most
-common styling mistake in these repos. The full catalogue — every module, mixin
-and utility class it provides — is in
-**`references/scss-foundation-catalog.md`**; read it before writing anything
-new.
+**Before writing any mixin, function, utility class or breakpoint, enumerate
+what the installed `@enigmatry/scss-foundation` actually exports**
+(`node_modules/@enigmatry/scss-foundation/src`). Adding a near-duplicate
+locally is the most common styling mistake in these repos.
+`references/scss-foundation-catalog.md` is a non-normative orientation
+snapshot of the catalogue — the installed package is the authority.
 
 If something is *almost* right, extend it in `scss-foundation` (with a test) —
 do not fork it into a component.
@@ -101,18 +101,12 @@ text → other); `stylelint-config-property-sort-order-smacss` autofixes this.
 - `@extend` only onto a `%placeholder`, never onto a class.
 - **`!important` is disallowed.** If you need it, the selector above it is wrong.
 
-The shared Stylelint config enforces these as **independent caps** — a selector
-must satisfy every one, so the specificity ceiling usually binds first:
-
-| Budget | Limit |
-|---|---|
-| Max specificity | **0,5,0** |
-| Nesting depth | **3** (`@include` excepted) |
-| Compound selectors | **3** |
-| Classes per selector | **5** |
-| Type selectors | **2** |
-| Pseudo-classes per selector | **1** |
-| IDs, attribute selectors, universal | **0** |
+The shared `@enigmatry/stylelint-config` enforces **independent caps** — on
+selector specificity, nesting depth, compound selectors, classes, type
+selectors and pseudo-classes per selector (IDs, attribute selectors and the
+universal selector at zero), plus a file-length cap. A selector must satisfy
+every one; **the config is the authority for the numbers** — do not restate
+them in prose or assert them from memory in review.
 
 **Every rule in the shared config is error severity.** A `stylelint-disable` is
 hiding a real failure — the two legitimate uses are a global utility needing an
@@ -175,8 +169,8 @@ only-`main.scss`-compiles rule and the `_index.scss` convention.
 - **Don't repeat yourself:** repeated mixin logic becomes a private mixin;
   styles repeated across components become a shared mixin in `modules/`.
 - **Keep files small** — a file holds one component's styles, or a handful of
-  related mixins, and should rarely exceed ~100 lines. The shared config caps it
-  at 135 via `stylelint-file-max-lines`.
+  related mixins, and should rarely exceed ~100 lines. The shared config
+  enforces a hard cap via `stylelint-file-max-lines`.
 
 ## Tokens, values and units
 

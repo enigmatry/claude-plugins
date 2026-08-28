@@ -1,6 +1,6 @@
 ---
 name: angular
-description: Angular authoring conventions, written modern-first for Angular 20+ (signals, standalone, inject(); NgModule-era notes cover repos mid-migration) — member visibility, artifact file suffixes, lifecycle hooks and their replacements, control-flow blocks and @for track selection, async work via resource() and toSignal(), the RxJS boundary, forms, selectors, i18n and error surfacing. Use this when writing or reviewing Angular components, services, directives, pipes, interceptors, guards, resolvers or the TypeScript side of templates, including generators that emit them. Spec files are covered by angular-testing; markup structure and SCSS by frontend-styling.
+description: Angular authoring conventions, written modern-first for Angular 20+ (signals, standalone, inject(); NgModule-era notes cover repos mid-migration). Use this when writing or reviewing Angular components, services, directives, pipes, interceptors, guards, resolvers or the TypeScript side of templates, including generators that emit them. Spec files are covered by angular-testing; markup structure and SCSS by frontend-styling.
 ---
 
 # Angular
@@ -112,17 +112,18 @@ private readonly rows = viewChildren(RowComponent);
   automatic. Use `{ initialValue: … }` for async sources, `{ requireSync: true }`
   for synchronous ones.
 - **Query a directive/component by type, not by template-reference string.**
-  `viewChild.required(MatTable)` returns the directive; `viewChild('table')`
-  returns the `ElementRef` unless you pass `{ read: MatTable }` — a type argument
-  alone makes it compile while handing you the wrong object at runtime.
+  `viewChild.required(MatTable)` returns the table, checked at compile time. A
+  string ref resolves to whatever the ref points at — the component instance
+  when the element hosts a component, the `ElementRef` otherwise — and a plain
+  attribute directive is reachable only via `{ read: TheDirective }` or its
+  `exportAs`. A generic on a string query (`viewChild<MatTable>('table')`) makes
+  the wrong assumption compile and fail at runtime.
 
 **The one getter worth keeping** reads from *classic* reactive forms
 (`FormControl`/`FormGroup`/`FormArray`), whose `.value` is a plain snapshot with
 changes flowing through `valueChanges` — a `computed()` over it would cache and
-go stale. **Signal Forms** (`@angular/forms/signals`) remove even that: value and
-state are signals (`form.email().value()`, `.errors()`, `.pending()`). They
-landed as *experimental* in Angular 21 — **check your Angular version and the
-release notes before migrating a form onto them.**
+go stale. Signal Forms remove even that exception — see `references/forms.md`
+for their status before migrating a form onto them.
 
 ## Replacing lifecycle hooks
 

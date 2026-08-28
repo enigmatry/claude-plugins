@@ -1,6 +1,6 @@
 ---
 name: a11y
-description: Accessibility — WCAG 2.2 Level AA conformance for user-facing UI. Covers semantics and landmarks, accessible name/role/value/state, keyboard operability and focus management, composite widget patterns, contrast and colour tokens, forced-colors/High Contrast mode, reflow at 320px, labels, forms and error messaging, images, navigation and tables. Use this whenever building or reviewing a UI component, form, navigation or user-facing HTML/Angular template, or when asked for an accessibility or screen-reader review. It defines what the UI must achieve for users; how the markup and SCSS are built is frontend-styling.
+description: Accessibility — WCAG 2.2 Level AA conformance for user-facing UI. Use this whenever building or reviewing a UI component, form, navigation or user-facing HTML/Angular template, or when asked for an accessibility or screen-reader review. It defines what the UI must achieve for users; how the markup and SCSS are built is frontend-styling.
 ---
 
 # Accessibility — WCAG 2.2 AA
@@ -30,8 +30,6 @@ unless the host project has adopted the rule as its own standard.
 - **Every element exposes a correct accessible name, role, value, state and
   properties** (WCAG 4.1.2). State that changes — expanded, selected, checked,
   invalid, busy — must change programmatically too, not only visually.
-- Every interactive element is keyboard operable, has clearly visible focus, and
-  creates no keyboard trap.
 - **Never claim output is "fully accessible."** Generated markup still needs
   manual review and assistive-technology testing.
 
@@ -52,7 +50,9 @@ unless the host project has adopted the rule as its own standard.
 
 ## Keyboard and focus
 
-- Tab order follows reading order and is predictable. Focus is always visible.
+- **Every interactive element is keyboard operable, has clearly visible focus,
+  and creates no keyboard trap.**
+- Tab order follows reading order and is predictable.
 - Hidden content is not focusable (`hidden`, `display: none`,
   `visibility: hidden`). Anything under `aria-hidden="true"` — including its
   descendants — must not be focusable.
@@ -168,9 +168,12 @@ user must not scroll horizontally to read multi-line text.
   circle centred on each does not overlap a neighbour. Small icon buttons are the
   usual offender — pad the hit area, do not shrink the icon.
 - **Give users enough time** (SC 2.2.1). Any time limit is adjustable,
-  extendable, or can be turned off. Anything auto-updating, auto-scrolling or
-  auto-playing for more than 5 seconds can be paused, stopped or hidden
-  (SC 2.2.2).
+  extendable, or can be turned off.
+- **Moving, blinking or scrolling content** that starts automatically and lasts
+  more than 5 seconds can be paused, stopped or hidden (SC 2.2.2).
+  **Auto-updating content** (tickers, live feeds) gets no 5-second grace: at any
+  frequency and duration it can be paused, stopped, or have its update frequency
+  controlled — hiding is not a sufficient mechanism for it.
 - **Nothing flashes more than three times per second** (SC 2.3.1), and motion
   respects `@media (prefers-reduced-motion: reduce)`.
 - **Time-based media needs alternatives** — captions for video, transcripts for
@@ -212,20 +215,16 @@ user must not scroll horizontally to read multi-line text.
 
 ## Final verification
 
-Before finishing, explicitly check:
+Before finishing, walk the changed UI through each section above and confirm
+nothing regressed — the sections are the checklist, and each rule lives only
+there:
 
-- Landmarks, heading order, one `h1` *(house rule)*.
-- Keyboard: operable, visible focus, predictable order, no traps, the bypass
-  mechanism (house standard: skip link) works.
-- Labels visible and contained in accessible names.
-- Forms: labels, required indicators, `aria-invalid` + `aria-describedby`, focus
-  moves to the first invalid control.
-- Contrast 4.5:1 / 3:1, focus boundaries 3:1, colour never the only cue.
-- Forced colors: nothing breaks, system colours used inside the media query.
-- Reflow at 320px: no content loss, no horizontal scrolling.
-- Images: informative ones described, decorative ones hidden; media captioned.
-- Targets ≥ 24×24px; time limits adjustable; nothing flashes >3×/second.
-- Tables use `<th>`; grids are properly structured.
+- *Structure and semantics*
+- *Keyboard and focus* (including the bypass mechanism and composite widgets)
+- *Contrast and colour*, *Forced colors / High Contrast*
+- *Reflow*, *Target size, timing and motion*
+- *Controls and labels*, *Forms*
+- *Graphics, navigation, tables*
 
 Then say what was *not* verified. Automated generation catches structure, not
 lived experience — recommend manual testing (e.g. Accessibility Insights, a

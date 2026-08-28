@@ -105,28 +105,22 @@ beforeEach(() => {
   factory. Never share mutable mock state across tests; a global "reset all"
   hides stale-state bugs.
 - **`vi.mock` is not usable for first-party code** under the Angular unit-test
-  builder: relative imports throw outright, and path-aliased specifiers silently
-  do nothing — the spec then runs against the real implementation, usually
-  surfacing as a confusing "not a function" error on the supposed mock. Mocking
-  an npm package technically works but is unreliable, because whether the package
-  is pre-bundled varies per run and the spec goes flaky.
-  **Inject through the TestBed instead.**
+  builder, and mocking an npm package with it is flaky — **inject through the
+  TestBed instead**. The failure modes and the Jest comparison are in
+  `references/migrate-to-vitest.md` (trap 2).
 - If a class constructs a non-injectable dependency itself, **give it a factory
   parameter** and pass a stub from the spec, rather than mocking the package.
 - Use a **partial spy** (`vi.spyOn`) when you need a real instance with one
   method replaced. Restore it if it was set outside `beforeEach`. **Spy on the
-  instance, not the prototype** — `typescript` requires methods to be `readonly`
-  arrow properties, which are own instance properties, so
-  `vi.spyOn(SomeClass.prototype, 'method')` silently misses them.
+  instance, not the prototype** — arrow-property methods never live on the
+  prototype (`typescript` → *Class method style*).
 - For Observable-returning dependencies return `of(value)` or
   `throwError(() => new Error(…))`; for Promise APIs use `mockResolvedValue` /
   `mockRejectedValue`.
 - `vi.clearAllMocks()` only when the mock reference must stay stable across tests
   (e.g. a `describe`-scope spy) and you need to clear call history only. Rebuild
-  via the factory otherwise. Note Vitest's semantics differ from Jest's:
-  `mockReset` restores the implementation passed to `vi.fn(impl)` rather than
-  leaving an `undefined`-returning stub; `mockRestore` still restores a spied
-  original.
+  via the factory otherwise. (`mockReset` semantics differ from Jest's — see
+  `references/migrate-to-vitest.md`, trap 3.)
 - **Prefer testing behaviour through the public API.** Reach into a private
   member only when the logic is complex enough to warrant it, and do it with the
   spec-only cast `typescript` allows — a cast to a declared type, never `any`.

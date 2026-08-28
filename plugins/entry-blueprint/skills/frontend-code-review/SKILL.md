@@ -31,7 +31,8 @@ Rank every finding and report the most severe first.
 - Security: vulnerability, exposed secret or PII, missing authorization check
 - Correctness: logic error, data corruption, race condition
 - Breaking change: a published package's public API changed without a version
-  bump — a removed or renamed export is breaking even if nothing internal uses it
+  bump (what counts as breaking: `typescript` → *Module and public-API
+  boundaries*)
 - Data loss
 
 **🟡 IMPORTANT — requires discussion**
@@ -51,8 +52,8 @@ Rank every finding and report the most severe first.
 - An `a11y` rule tagged *(house rule)* violated in a project that has not
   adopted it as its own standard — unmarked `a11y` rules are WCAG failures and
   stay IMPORTANT
-- A missing doc comment on an exported symbol **of a package whose reference
-  docs are generated** — not on public members generally
+- A missing doc comment where `frontend-foundations` → *Comments* requires one
+  (generated reference docs only — never on public members generally)
 
 ## Scan order
 
@@ -65,21 +66,18 @@ Check each step against the loaded skill, not from memory.
 3. **Security** — secrets, PII in logs, unvalidated input, unsanitized HTML.
 4. **Failure handling** — empty catch, `void` on a promise, log-and-continue, a
    duplicate notification for an error already handled globally.
-5. **Suppressions** — every new `any`, `!`, `@ts-*` or lint disable needs a
-   named rule and a stated reason. A new `as` must be one of the casts
-   `typescript` allows — anything else is a finding, reason or not.
+5. **Suppressions** — `any`, `!` and `@ts-*` are banned outright
+   (`frontend-foundations`, `typescript`): any new one is a finding, reason or
+   not. A new `as` must be one of the casts `typescript` allows — anything else
+   is a finding. A new lint disable needs a named rule and a stated reason.
 6. **Framework conventions** — `angular`'s bans and requirements: structural
    directives, `@for` track stability, DI style, decorators, `async` hooks,
    `OnPush`, selector prefix.
 7. **Accessibility** — for any changed template.
-8. **Styling judgement calls** — the ones Stylelint cannot make: a mixin,
-   utility or breakpoint reinvented locally when `scss-foundation` already has
-   it; a hard-coded value that should be a token; **any `::ng-deep`** (the config
-   tolerates it, review does not); a vendor class targeted anywhere but
-   `vendors/overrides/` or under the component's own host class;
-   `ViewEncapsulation.None`; a `>`/`+`/`~` combinator; a class name that is
-   BEM-style (`__`/`--`), carries a category prefix (`is-`, `l-`, `theme-`),
-   abbreviates, is assembled with `&`, or runs past three words.
+8. **Styling judgement calls** — the ones Stylelint cannot make: foundation
+   reuse, tokens, vendor overrides, encapsulation, combinators, class naming.
+   Check the diff against `frontend-styling` → *Before you finish* — that list
+   is the authority; do not re-derive it from memory here.
 9. **Tests** — is the new behaviour covered, do the tests branch, can they fail,
    are they deterministic?
 10. **Leftovers** — commented-out code, `TODO` with no ticket, debug logging,

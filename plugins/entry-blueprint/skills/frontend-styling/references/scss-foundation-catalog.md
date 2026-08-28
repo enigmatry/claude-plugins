@@ -1,8 +1,12 @@
 # @enigmatry/scss-foundation — what it provides
 
-Load this before writing any new mixin, function, utility class or breakpoint,
-to check whether the foundation already has it. Source:
+**Non-normative snapshot, for orientation only.** The installed package is the
+authority: before writing any new mixin, function, utility class or breakpoint,
+enumerate what it actually exports —
+`node_modules/@enigmatry/scss-foundation/src`, or the source repo:
 <https://github.com/enigmatry/entry-angular-building-blocks/tree/master/libs/scss-foundation>.
+The package may have gained modules since this file was written; **absence from
+this catalogue proves nothing**.
 
 ## Modules (`src/modules/`)
 
@@ -28,4 +32,4 @@ to check whether the foundation already has it. Source:
 ## When it is almost right
 
 If something is *almost* right, extend it in `scss-foundation` (with a test —
-see `references/scss-unit-tests.md`) — do not fork it into a component.
+see `scss-unit-tests.md`, beside this file) — do not fork it into a component.

@@ -95,7 +95,7 @@ The compiler, the analyzer and the linter are the cheapest tests available.
 
 - **Do not reach for a type-system escape hatch.** No `@ts-ignore`, no
   `@ts-nocheck`, no `any`, no non-null `!`, no unchecked `as` (see `typescript`
-  for the one narrow cast that is allowed and why).
+  for the short, complete list of allowed casts and why).
 - **A new suppression is the narrowest one that works, and it says why.** One
   named rule at one site — never a bare `/* eslint-disable */`, never a whole
   file. Put the reason beside it: `-- why` after the disable. On the TypeScript

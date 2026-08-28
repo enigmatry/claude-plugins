@@ -1,6 +1,6 @@
 ---
 name: typescript
-description: Framework-agnostic TypeScript conventions for codebases on TypeScript 5.x+ compiling to ES2022+ as pure ES modules — that baseline is required, not preferred. Covers casing and sigils, file and declaration layout, the type system and the allowed casts, class method style, async/await and error handling, constants, and module and public-API boundaries. Use this when writing or reviewing any .ts file in a project on that baseline, with or without a UI framework. Framework-specific patterns are not here — for Angular components, templates, DI, RxJS and artifact file suffixes see angular; for spec files see angular-testing.
+description: Framework-agnostic TypeScript conventions for codebases on TypeScript 5.x+ compiling to ES2022+ as pure ES modules (a required baseline). Use this when writing or reviewing any .ts file in a project on that baseline, with or without a UI framework. Angular-specific patterns live in angular; spec files in angular-testing.
 ---
 
 # TypeScript

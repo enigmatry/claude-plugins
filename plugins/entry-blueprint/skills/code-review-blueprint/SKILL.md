@@ -52,7 +52,7 @@ description: Enigmatry Entry Blueprint code review checklist covering .NET 9 and
 - [ ] `firstValueFrom()` for single-value observables; `.subscribe()` only for true streams
 - [ ] `readonly` arrow-function properties for all class methods except Angular lifecycle hooks
 - [ ] `ngOnInit`, `ngOnDestroy`, etc. declared as plain methods (not arrow properties)
-- [ ] `it.each` used for parameterised Jest tests instead of repeated `it()` blocks
+- [ ] `it.each` used for parameterised tests instead of repeated `it()` blocks
 - [ ] Generated files in `src/app/features/` NOT edited manually
 - [ ] NSwag client regenerated if API contracts changed (`npm run nswag`)
 - [ ] New i18n keys reuse `shared.*` for generic labels; no duplicate keys

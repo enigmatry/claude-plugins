@@ -21,13 +21,27 @@ vertical-slice projects built on the
 | `entry-blueprint:aspnet-rest-apis` | .NET Web API features: MediatR, Autofac, FluentValidation, vertical slices |
 | `entry-blueprint:csharp-coding-standards` | Any C# file: naming, formatting, nullability |
 | `entry-blueprint:csharp-unit-tests` | C# tests: NUnit, FluentAssertions, NSubstitute, Verify |
-| `entry-blueprint:typescript-coding-standards` | Any TypeScript file: naming, type system, async, architecture |
-| `entry-blueprint:angular-unit-testing` | Angular Jest spec files |
+| `entry-blueprint:frontend-foundations` | Every front-end task: comments, naming, code shape, failure handling, security |
+| `entry-blueprint:typescript` | Any TypeScript file: naming, type system, async/await, module boundaries |
+| `entry-blueprint:angular` | Angular components, services, directives, templates: signals, standalone, `inject()` |
+| `entry-blueprint:angular-testing` | Spec files on Vitest, incl. migrating a repo off Jest/Jasmine/Karma |
+| `entry-blueprint:frontend-styling` | `.html`/`.scss`: semantics, SMACSS naming, SCSS modules, tokens, breakpoints |
 | `entry-blueprint:a11y` | UI components and templates: WCAG 2.2 Level AA |
+| `entry-blueprint:frontend-code-review` | Reviewing a front-end diff: skill per file type, severity tiers, what not to flag |
 | `entry-blueprint:azure-devops-pipelines` | Azure DevOps pipeline YAML |
 | `entry-blueprint:code-review-blueprint` | Reviewing changes before declaring work done |
 | `entry-blueprint:jira-branch` | Creating a git branch from a Jira ticket (assigns + transitions the ticket) |
 | `entry-blueprint:pull-request` | Creating an Azure DevOps PR with Squash merge, completed manually after review |
+
+The front-end skills are layered so a rule lives in exactly one file:
+`frontend-foundations` is the base every other one points at; `typescript` is
+deliberately framework-free; `angular` carries the framework delta and
+`angular-testing` the spec delta. The set picks a side in two places —
+`async/await` over single-value Observables, and **Vitest as the standard
+runner** (a repo on Jest/Jasmine/Karma gets migrated, not extended;
+`angular-testing/references/migrate-to-vitest.md` carries the API mapping).
+Repo-specific facts belong in the host project's `CLAUDE.md` or a thin
+per-project skill, not in these shared skills.
 
 #### Stop hook
 

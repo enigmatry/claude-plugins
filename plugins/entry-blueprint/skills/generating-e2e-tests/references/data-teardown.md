@@ -92,7 +92,7 @@ A lookup-and-delete that guesses is worse than no cleanup: it can remove another
 A bounded timeout doesn't cancel the POST. If the server commits *after* the capture timed out and after the fallback lookup ran, the row survives the run and nothing inside `afterEach` can observe it. That race isn't closeable at test scope, so don't document the suite as if it were — mitigate outside:
 
 - `globalTeardown` sweeps records matching the run prefix once all workers are done, catching anything that committed late.
-- A periodic job sweeps the `e2e-` prefix for runs killed before `globalTeardown` ran.
+- A periodic job sweeps the `e2e-` prefix for runs killed before `globalTeardown` ran — deleting only rows past a generous age threshold (or whose run id is absent from an active-run registry), so it can never take records from a run still in flight.
 
 ## The cleanup-helper contract
 
@@ -123,9 +123,14 @@ export interface CreateCapture {   // neither promise ever rejects
   result: Promise<CaptureResult>;
 }
 
-// runId is stamped once in globalSetup and read from env.
-export const uniqueName = (prefix: string) =>
-  `e2e-${process.env.E2E_RUN_ID}-${prefix}-${randomUUID().slice(0, 8)}`;
+// runId is stamped once in globalSetup — `process.env.E2E_RUN_ID ??= randomUUID().slice(0, 8)`
+// — and read from env. Fail fast rather than mint `e2e-undefined-…` keys that
+// no sweep can tie back to a run.
+export const uniqueName = (prefix: string) => {
+  const runId = process.env.E2E_RUN_ID;
+  if (!runId) throw new Error('E2E_RUN_ID is not set. Stamp it in globalSetup before any test runs.');
+  return `e2e-${runId}-${prefix}-${randomUUID().slice(0, 8)}`;
+};
 
 export const expectCreated = (result: CaptureResult): CreatedRecord => {
   if ('error' in result) throw result.error;
@@ -156,8 +161,15 @@ export function armCapture(
     // Proof the create went out, plus the auth/tenant context the fallback needs
     // — the response path is exactly what failed when the fallback runs.
     dispatched: (async () => {
-      const request = await requestPromise.catch(() => undefined);
-      return request && { url: request.url(), headers: await request.allHeaders() };
+      try {
+        const request = await requestPromise;
+        return { url: request.url(), headers: await request.allHeaders() };
+      } catch {
+        // No dispatch observed, or its headers were unavailable (page already
+        // closed). Resolving to undefined keeps the fallback off; a committed
+        // row still carries the run marker, so the sweep reclaims it.
+        return undefined;
+      }
     })(),
 
     // Failures travel as a value. A rejection would land during the awaited
@@ -181,12 +193,16 @@ export function armCapture(
   };
 }
 
+// Exact-field equality only — never substring matching. JSON and
+// form-urlencoded bodies are parsed by field; anything else (multipart, …)
+// fails closed: the create goes uncaptured, and its run-marked key lets the
+// sweep reclaim the row.
 const postFieldEquals = (postData: string | null, field: string, value: string) => {
   if (!postData) return false;
   try {
     return (JSON.parse(postData) as Record<string, unknown>)[field] === value;
   } catch {
-    return postData.includes(value); // last resort: form-encoded or multipart body
+    return new URLSearchParams(postData).get(field) === value;
   }
 };
 ```

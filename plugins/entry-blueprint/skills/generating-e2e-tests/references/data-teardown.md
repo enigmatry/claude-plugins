@@ -92,7 +92,7 @@ A lookup-and-delete that guesses is worse than no cleanup: it can remove another
 A bounded timeout doesn't cancel the POST. If the server commits *after* the capture timed out and after the fallback lookup ran, the row survives the run and nothing inside `afterEach` can observe it. That race isn't closeable at test scope, so don't document the suite as if it were — mitigate outside:
 
 - `globalTeardown` sweeps records matching the run prefix once all workers are done, catching anything that committed late.
-- A periodic job sweeps the `e2e-` prefix for runs killed before `globalTeardown` ran — deleting only rows past a generous age threshold (or whose run id is absent from an active-run registry), so it can never take records from a run still in flight.
+- A periodic job sweeps the `e2e-` prefix for runs killed before `globalTeardown` ran — deleting only rows older than the suite's enforced maximum run lifetime (Playwright's `globalTimeout`), or whose run id is absent from an active-run registry. An age threshold with no enforced lifetime behind it can't distinguish a dead run from a long one.
 
 ## The cleanup-helper contract
 
@@ -150,7 +150,7 @@ export function armCapture(
 
     // Exact field equality, so a concurrent worker's create against the same
     // endpoint can't be picked up as ours.
-    return postFieldEquals(request.postData(), field, value);
+    return postFieldEquals(request, field, value);
   };
 
   // Called synchronously, so both listeners are armed before the caller clicks.
@@ -193,16 +193,30 @@ export function armCapture(
   };
 }
 
-// Exact-field equality only — never substring matching. JSON and
-// form-urlencoded bodies are parsed by field; anything else (multipart, …)
-// fails closed: the create goes uncaptured, and its run-marked key lets the
-// sweep reclaim the row.
-const postFieldEquals = (postData: string | null, field: string, value: string) => {
+// Exact-field equality only — never substring matching. Bodies are parsed
+// per their declared content type; anything else (multipart, missing or
+// unknown content type, unparseable body) fails closed: the create goes
+// uncaptured, and its run-marked key lets the sweep reclaim the row.
+const postFieldEquals = (request: Request, field: string, value: string) => {
+  const postData = request.postData();
   if (!postData) return false;
-  try {
-    return (JSON.parse(postData) as Record<string, unknown>)[field] === value;
-  } catch {
-    return new URLSearchParams(postData).get(field) === value;
+  const contentType = request.headers()['content-type'] ?? '';
+
+  if (contentType.includes('application/json')) {
+    try {
+      return (JSON.parse(postData) as Record<string, unknown>)[field] === value;
+    } catch {
+      return false;
+    }
   }
+
+  if (contentType.includes('application/x-www-form-urlencoded')) {
+    // A repeated field is ambiguous — servers differ on which value they
+    // bind — so only a single, exactly-equal decoded value counts as ours.
+    const values = new URLSearchParams(postData).getAll(field);
+    return values.length === 1 && values[0] === value;
+  }
+
+  return false;
 };
 ```

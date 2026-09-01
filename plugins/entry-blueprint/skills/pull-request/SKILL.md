@@ -1,39 +1,27 @@
 ---
 name: pull-request
-description: Create an Azure DevOps pull request titled after the Jira ticket, with Squash merge strategy and auto-complete enabled. Use this when the user asks to create a PR (pull request).
+description: Create an Azure DevOps pull request titled after its Jira ticket, using the Squash merge strategy with auto-complete off. Use when the user asks to open, create, publish, or raise a PR, or to send the current branch for review.
 ---
 
-# Pull Request Workflow
+# Pull Request
 
-## Project configuration
+Read the project identifiers (Jira project key, Atlassian cloud ID, Azure DevOps org/repo/project, default branch) from the **"Known identifiers"** section of the host project's `CLAUDE.md`. If that section is missing, ask the user for them rather than guessing.
 
-First, read the **"Known identifiers"** section of the host project's `CLAUDE.md`
-for:
+## Create
 
-- **Jira project key** (e.g. `BP`) and **Atlassian cloud ID** (e.g. `yourcompany.atlassian.net`)
-- **Azure DevOps org/repo** (e.g. `yourorg/your-repo`) and **Azure DevOps project**
-- **Default branch** — the PR target (e.g. `master`)
+Create the PR in Azure DevOps from the current branch, targeting the default branch:
 
-If that section is missing, ask the user for these values before proceeding,
-and suggest adding a "Known identifiers" section to `CLAUDE.md`.
+- **Title:** `<TICKET-ID> - <Jira ticket title>` (uppercase ticket ID, space-dash-space separator). Fetch the ticket title if it isn't in context — never invent it.
+- **Description:** the direct Jira link, then a short summary — one paragraph of a few sentences on what changed and why, for a reviewer who hasn't read the ticket. Not a changelog, not a bullet list, no section headings.
+- **Draft:** no, unless the user asks for one.
 
-## Workflow
+## Verify the completion options — do not skip this
 
-1. **Fetch the Jira ticket** (if not already known) to get the title.
-2. **Get current branch name**: `git branch --show-current`
-3. **Create the PR** via Azure DevOps using:
-   - `sourceRefName`: current branch (`refs/heads/<branch-name>`)
-   - `targetRefName`: `refs/heads/<default-branch>`
-   - `title`: `<TICKET-ID> - <Jira ticket title>`
-   - `description`: `https://<atlassian-cloud-id>/browse/<TICKET-ID>`
-   - `isDraft`: false (unless user requests a draft)
-4. Set **Squash** merge strategy and enable **auto-complete**: call `azure-devops-repo_update_pull_request` with `mergeStrategy: Squash` and `autoComplete: true`.
-5. Confirm the PR URL to the user.
+Creating a PR does not set these, and the defaults are wrong for this workflow: Azure DevOps treats an unset merge strategy as no-fast-forward, and an org or project setting can enable auto-complete at creation time without being asked. So after creating the PR, explicitly update it and then **read it back** and confirm:
 
-## Rules
+- `completionOptions.mergeStrategy` is squash. Compare it case-insensitively: the REST API serializes this enum in camelCase, so a correctly-updated PR reads back as `"squash"`, not the `Squash` spelling used in the portal and the docs. Matching the literal `Squash` reports failure on a PR that is in fact set correctly.
+- `autoCompleteSetBy` is `null` — this workflow completes PRs manually after review. If it came back non-null because a project setting queued it, cancel auto-complete and read back again.
 
-- PR title format: `<TICKET-ID> - <ticket title>` (uppercase ticket ID, space-dash-space separator).
-- PR description must be the direct Jira link.
-- Always use Squash merge strategy.
-- Always enable Auto-complete — verify `autoCompleteSetBy` is non-null in the response.
-- Never create the PR without the Jira ticket title (fetch it if not in context).
+If the read-back doesn't show both, report that plainly instead of claiming success.
+
+Confirm the PR URL to the user.

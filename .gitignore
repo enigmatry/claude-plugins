@@ -1,0 +1,9 @@
+# Claude Code — per-developer local settings.
+# .claude/settings.json is shared and committed; the .local variant is not.
+.claude/settings.local.json
+**/.claude/settings.local.json
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini

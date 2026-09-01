@@ -200,9 +200,12 @@ export function armCapture(
 const postFieldEquals = (request: Request, field: string, value: string) => {
   const postData = request.postData();
   if (!postData) return false;
+  // Media-type essence: parameters stripped, case folded — `includes` would
+  // also match a type smuggled into a parameter, and miss valid uppercase.
   const contentType = request.headers()['content-type'] ?? '';
+  const mediaType = contentType.split(';', 1)[0].trim().toLowerCase();
 
-  if (contentType.includes('application/json')) {
+  if (mediaType === 'application/json') {
     try {
       return (JSON.parse(postData) as Record<string, unknown>)[field] === value;
     } catch {
@@ -210,7 +213,7 @@ const postFieldEquals = (request: Request, field: string, value: string) => {
     }
   }
 
-  if (contentType.includes('application/x-www-form-urlencoded')) {
+  if (mediaType === 'application/x-www-form-urlencoded') {
     // A repeated field is ambiguous — servers differ on which value they
     // bind — so only a single, exactly-equal decoded value counts as ours.
     const values = new URLSearchParams(postData).getAll(field);

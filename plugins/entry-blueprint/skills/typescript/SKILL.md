@@ -1,6 +1,6 @@
 ---
 name: typescript
-description: Framework-agnostic TypeScript conventions for codebases on TypeScript 5.x+ compiling to ES2022+ as pure ES modules (a required baseline). Use this when writing or reviewing any .ts file in a project on that baseline, with or without a UI framework. Angular-specific patterns live in angular; spec files in angular-testing.
+description: Framework-agnostic TypeScript conventions for codebases on TypeScript 5.x+ compiling to ES2022+ as pure ES modules (a required baseline). Use this when writing or reviewing any .ts file in a project on that baseline, with or without a UI framework. Angular-specific patterns live in angular; unit and component specs in angular-testing; Playwright e2e specs in generating-e2e-tests.
 ---
 
 # TypeScript
@@ -45,7 +45,9 @@ per file. The TypeScript delta:
   anything a second file imports gets its own file.
 - **Which suffixes exist is a framework/tooling question**, not a language one.
   Take the list from the generator's configuration; for Angular, see `angular`.
-- Tests are `<subject>.spec.ts` beside `<subject>.ts`.
+- Unit tests are `<subject>.spec.ts` beside `<subject>.ts`. Playwright e2e
+  specs are the named exception: they test flows, not source files, so they
+  follow the e2e suite's own layout — see `generating-e2e-tests`.
 
 ## Type system
 
@@ -58,10 +60,13 @@ per file. The TypeScript delta:
      forces a genuine structural mismatch that no narrowing can bridge:
      `value as unknown as Target`. It is loud, greppable, and confined to that
      boundary.
-  2. **The spec-only private-member cast.** In a `.spec.ts` file, a cast to a
-     declared type to reach a private member — permitted only when the logic is
-     complex enough to warrant direct access (`angular-testing` owns the
-     conditions).
+  2. **The private-member cast in a unit or component spec.** A cast to a
+     declared type to reach a private member of the class under test —
+     permitted only when the logic is complex enough to warrant direct access
+     (`angular-testing` owns the conditions). A Playwright spec — as defined in
+     `generating-e2e-tests` → *What counts as a Playwright spec* — has no class
+     under test and gets nothing from this rule; `generating-e2e-tests` adds no
+     casts of its own.
 
   **Never `as any`** in either form, and never reach for a cast to paper over a
   type you could narrow.

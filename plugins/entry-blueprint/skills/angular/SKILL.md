@@ -1,6 +1,6 @@
 ---
 name: angular
-description: Angular authoring conventions, written modern-first for Angular 20+ (signals, standalone, inject(); NgModule-era notes cover repos mid-migration). Use this when writing or reviewing Angular components, services, directives, pipes, interceptors, guards, resolvers or the TypeScript side of templates, including generators that emit them. Spec files are covered by angular-testing; markup structure and SCSS by frontend-styling.
+description: Angular authoring conventions, written modern-first for Angular 20+ (signals, standalone, inject(); NgModule-era notes cover repos mid-migration). Use this when writing or reviewing Angular components, services, directives, pipes, interceptors, guards, resolvers or the TypeScript side of templates, including generators that emit them. Unit and component specs are covered by angular-testing, Playwright e2e specs by generating-e2e-tests; markup structure and SCSS by frontend-styling.
 ---
 
 # Angular

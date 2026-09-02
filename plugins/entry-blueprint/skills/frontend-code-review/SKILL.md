@@ -1,6 +1,6 @@
 ---
 name: frontend-code-review
-description: Review harness for a front-end change — which skill to load for which file type, severity tiers, a scan order, the comment format, and an explicit list of what not to flag. Use this when reviewing an Angular, TypeScript or SCSS pull request or diff. It provides the process only; the rules being checked live in frontend-foundations, typescript, angular, frontend-styling, angular-testing and a11y.
+description: Review harness for a front-end change — which skill to load for which file type, severity tiers, a scan order, the comment format, and an explicit list of what not to flag. Use this when reviewing an Angular, TypeScript or SCSS pull request or diff. It provides the process only; the rules being checked live in frontend-foundations, typescript, angular, frontend-styling, angular-testing, generating-e2e-tests and a11y.
 ---
 
 # Front-End Code Review
@@ -18,7 +18,8 @@ the ones the diff touches rather than working from memory.
 | components, services, directives, pipes, interceptors, guards, resolvers, templates | `angular` |
 | `.html`, `.scss` | `frontend-styling` |
 | user-facing UI | `a11y` |
-| specs | `angular-testing` |
+| Playwright specs — decided solely by `generating-e2e-tests` → *What counts as a Playwright spec* | `generating-e2e-tests` |
+| every other spec | `angular-testing` |
 
 Review comments are written in **English**.
 
@@ -79,7 +80,9 @@ Check each step against the loaded skill, not from memory.
    Check the diff against `frontend-styling` → *Before you finish* — that list
    is the authority; do not re-derive it from memory here.
 9. **Tests** — is the new behaviour covered, do the tests branch, can they fail,
-   are they deterministic?
+   are they deterministic? Judge an e2e spec by `generating-e2e-tests`, not
+   `angular-testing` — its run-unique randomized keys, suite layout and timeout
+   literals are required there, not findings.
 10. **Leftovers** — commented-out code, `TODO` with no ticket, debug logging,
     unused imports, hand-edits to generated files.
 

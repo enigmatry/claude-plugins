@@ -1,6 +1,6 @@
 ---
 name: generating-e2e-tests
-description: Write or modify Playwright end-to-end tests. Use only for a spec that imports from @playwright/test (directly or via the suite's fixtures) in a project with a playwright.config.*, or when the user explicitly asks for a Playwright/e2e test. Covers coverage scope, spec structure, page objects, and API teardown of created data on shared environments. Layers on frontend-foundations and typescript, and supersedes angular-testing for e2e specs. Not for unit tests, component tests, API-only test suites, or interactive browser automation.
+description: Write or modify Playwright end-to-end tests. Use only for a Playwright spec — one that imports test/expect from @playwright/test or from a fixtures module extending it, AND lives under the testDir of a playwright.config.* rather than beside a source file (the one definition, in this skill's "What counts as a Playwright spec") — or when the user explicitly asks for a Playwright/e2e test. Covers coverage scope, spec structure, page objects, and API teardown of created data on shared environments. Layers on frontend-foundations and typescript, and supersedes angular-testing for e2e specs. Not for unit tests, component tests, API-only test suites, or interactive browser automation.
 ---
 
 # Generating a Playwright e2e test
@@ -20,12 +20,20 @@ Three rules drive everything:
 
 ### What counts as a Playwright spec
 
-Classify by the spec, never by the project. A `playwright.config.*` proves the
-package has an e2e suite; it says nothing about a colocated Vitest spec in the
-same package, which stays with `angular-testing`. A spec is Playwright's when it
-imports `test`/`expect` from `@playwright/test` — directly or through a fixtures
-module that extends it — and lives in the suite's own tree (the config's
-`testDir`, typically `tests/`) rather than beside a source file.
+This is the only definition; `angular-testing`, `typescript` and
+`frontend-code-review` point here rather than restating it. A spec is a
+Playwright spec when **both** hold:
+
+1. It imports `test`/`expect` from `@playwright/test`, or from a fixtures module
+   that extends Playwright's `test`.
+2. It lives under the `testDir` of a `playwright.config.*` (typically `tests/`),
+   not beside a source file.
+
+Every other spec is a unit or component spec and belongs to `angular-testing` —
+including a colocated Vitest spec that imports only a type such as `Page` from
+`@playwright/test`, and every colocated spec in a package that also happens to
+contain a `playwright.config.*`. Config presence proves an e2e suite exists, not
+that a given spec belongs to it.
 
 ### Deliberate exceptions
 
@@ -132,6 +140,6 @@ Load these when the task reaches them, not upfront:
 
 - Specs: `tests/<verb>-<entity>[-<subentity>].spec.ts`
 - Page objects: `pages/<name>-page.ts` (class `<Name>Page`), registered in `fixtures/index.ts`
-- Cleanup helpers and generators: `utils/<entity>-cleanup.ts`, `utils/generators.ts`, a header-replay helper, the capture util (`utils/create-capture.ts` and its siblings — see `references/data-teardown.md`)
+- Cleanup helpers and generators: `utils/<entity>-cleanup.ts`, `utils/generators.ts`, a header-replay helper, the capture util (`utils/arm-capture.ts` and its siblings — see `references/data-teardown.md`)
 - Static data: `test-data/<entities>.json`
 - Test-id additions: the application's frontend source

@@ -63,7 +63,8 @@ per file. The TypeScript delta:
   2. **The private-member cast in a unit or component spec.** A cast to a
      declared type to reach a private member of the class under test —
      permitted only when the logic is complex enough to warrant direct access
-     (`angular-testing` owns the conditions). A Playwright spec has no class
+     (`angular-testing` owns the conditions). A Playwright spec — as defined in
+     `generating-e2e-tests` → *What counts as a Playwright spec* — has no class
      under test and gets nothing from this rule; `generating-e2e-tests` adds no
      casts of its own.
 

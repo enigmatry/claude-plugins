@@ -18,8 +18,8 @@ the ones the diff touches rather than working from memory.
 | components, services, directives, pipes, interceptors, guards, resolvers, templates | `angular` |
 | `.html`, `.scss` | `frontend-styling` |
 | user-facing UI | `a11y` |
-| Vitest unit/component specs (colocated beside their source) | `angular-testing` |
-| Playwright specs (import from `@playwright/test` or the suite's fixtures, in the e2e tree — not merely any spec in a package with a `playwright.config.*`) | `generating-e2e-tests` |
+| Playwright specs — decided solely by `generating-e2e-tests` → *What counts as a Playwright spec* | `generating-e2e-tests` |
+| every other spec | `angular-testing` |
 
 Review comments are written in **English**.
 

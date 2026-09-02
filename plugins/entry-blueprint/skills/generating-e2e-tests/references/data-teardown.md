@@ -4,7 +4,7 @@ The failure this guards against: **the server commits the record but the test ne
 
 ## Find the capture util first
 
-The capture machinery is identical for every entity, so it belongs in the project, not hand-written into each spec. Look for `utils/create-capture.ts` or the project's equivalent; if there isn't one, create the files in the appendix once and use them everywhere after that.
+The capture machinery is identical for every entity, so it belongs in the project, not hand-written into each spec. Look for `utils/arm-capture.ts` or the project's equivalent; if there isn't one, create the files in the appendix once and use them everywhere after that.
 
 It provides three things:
 
@@ -97,8 +97,8 @@ A bounded timeout doesn't cancel the POST. If the server commits *after* the cap
 
 Per entity, alongside the page object's `armCreateCapture`:
 
-- `async function deleteX(request: APIRequestContext, x: CreatedRecord, options: { ignoreMissing?: boolean } = {}): Promise<void>`.
-- `async function deleteXByName(request: APIRequestContext, uniqueKey: string, dispatch: DispatchedCreate): Promise<void>` — the fallback, following the rules above.
+- `deleteX(request: APIRequestContext, x: CreatedRecord, options: { ignoreMissing?: boolean } = {}): Promise<void>`.
+- `deleteXByName(request: APIRequestContext, uniqueKey: string, dispatch: DispatchedCreate): Promise<void>` — the fallback, following the rules above.
 - **Replay, don't re-authenticate.** Reuse the auth/tenant headers captured from the app's own create request, stripping HTTP/2 pseudo-headers (`:authority`, …) and client-managed headers (`content-length`, `host`). Reuse the project's header-replay helper if one exists.
 - Derive the delete URL from the captured create URL's origin + pathname, so host and tenant context are preserved.
 - Throw a descriptive error on non-OK; tolerate 404 only when `ignoreMissing`.
@@ -106,7 +106,7 @@ Per entity, alongside the page object's `armCreateCapture`:
 
 ## Appendix — creating the capture util
 
-Only when the project has none. Four files: one exported declaration each, per `typescript` → *Files and declarations*, with the contract types in a theme-named file because specs, page objects and cleanup helpers all import them. Write them once, then the rest of this file is all a spec needs.
+Only when the project has none. Seven files, one exported declaration each, each named for the identifier inside it — `typescript` → *Files and declarations* gives anything a second file imports its own file, and the four contract types are imported by specs, page objects and cleanup helpers. Write them once, then the rest of this file is all a spec needs.
 
 The code follows `frontend-foundations` and `typescript` unchanged — no casts (response bodies are narrowed through a type guard), braces on every clause, arrow functions throughout, named durations. The reasons behind its shape live here rather than in comments:
 
@@ -118,10 +118,26 @@ The code follows `frontend-foundations` and `typescript` unchanged — no casts 
 - **`uniqueName` fails fast without `E2E_RUN_ID`.** Stamp it once in `globalSetup` (`process.env.E2E_RUN_ID ??= randomUUID().slice(0, runIdLength)`); minting `e2e-undefined-…` keys would leave rows no sweep can tie back to a run.
 
 ```typescript
-// utils/create-capture-contracts.ts
+// utils/created-record.ts
 export interface CreatedRecord { id: string; url: string; headers: Record<string, string> }
+```
+
+```typescript
+// utils/dispatched-create.ts
 export interface DispatchedCreate { url: string; headers: Record<string, string> }
+```
+
+```typescript
+// utils/capture-result.ts
+import type { CreatedRecord } from './created-record';
+
 export type CaptureResult = { record: CreatedRecord } | { error: Error };
+```
+
+```typescript
+// utils/create-capture.ts
+import type { CaptureResult } from './capture-result';
+import type { DispatchedCreate } from './dispatched-create';
 
 export interface CreateCapture {
   dispatched: Promise<DispatchedCreate | undefined>;
@@ -146,7 +162,8 @@ export const uniqueName = (prefix: string): string => {
 
 ```typescript
 // utils/expect-created.ts
-import type { CaptureResult, CreatedRecord } from './create-capture-contracts';
+import type { CaptureResult } from './capture-result';
+import type { CreatedRecord } from './created-record';
 
 export const expectCreated = (result: CaptureResult): CreatedRecord => {
   if ('error' in result) {
@@ -157,9 +174,11 @@ export const expectCreated = (result: CaptureResult): CreatedRecord => {
 ```
 
 ```typescript
-// utils/create-capture.ts
+// utils/arm-capture.ts
 import type { Page, Request, Response } from '@playwright/test';
-import type { CaptureResult, CreateCapture, DispatchedCreate } from './create-capture-contracts';
+import type { CaptureResult } from './capture-result';
+import type { CreateCapture } from './create-capture';
+import type { DispatchedCreate } from './dispatched-create';
 
 const defaultCaptureTimeoutMilliseconds = 15_000;
 

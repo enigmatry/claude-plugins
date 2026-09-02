@@ -1,12 +1,17 @@
 ---
 name: angular-testing
-description: Angular and TypeScript unit testing on Vitest — the standard runner. Covers test structure and naming, TestBed setup, mocking strategy, coverage expectations, parameterized tests, async handling and fake timers, and test data. Use this when writing or reviewing any spec or test file (*.spec.ts, *.test.ts), when deciding what to cover for a new component, service, pipe or interceptor, or when a project is still on Jest, Jasmine or Karma and needs migrating to Vitest.
+description: Angular and TypeScript unit testing on Vitest — the standard runner. Covers test structure and naming, TestBed setup, mocking strategy, coverage expectations, parameterized tests, async handling and fake timers, and test data. Use this when writing or reviewing a unit or component spec (*.spec.ts, *.test.ts colocated with its source), when deciding what to cover for a new component, service, pipe or interceptor, or when a project is still on Jest, Jasmine or Karma and needs migrating to Vitest. Not for Playwright e2e specs — those belong to generating-e2e-tests.
 ---
 
 # Angular Unit Testing
 
 > Read `frontend-foundations` first — it owns naming, code shape and
 > never-silencing-a-signal, all of which bind spec files too.
+
+**Scope: unit and component specs only.** A spec in a confirmed Playwright e2e
+project (a `playwright.config.*` exists) is not bound by this file —
+`generating-e2e-tests` owns it, including its deliberate departures from the
+rules below.
 
 **Vitest is the runner.** New suites are written on it, and a project still on
 Jest, Jasmine or Karma is migrated rather than extended — see *Legacy runners*

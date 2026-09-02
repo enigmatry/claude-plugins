@@ -1,6 +1,6 @@
 ---
 name: typescript
-description: Framework-agnostic TypeScript conventions for codebases on TypeScript 5.x+ compiling to ES2022+ as pure ES modules (a required baseline). Use this when writing or reviewing any .ts file in a project on that baseline, with or without a UI framework. Angular-specific patterns live in angular; spec files in angular-testing.
+description: Framework-agnostic TypeScript conventions for codebases on TypeScript 5.x+ compiling to ES2022+ as pure ES modules (a required baseline). Use this when writing or reviewing any .ts file in a project on that baseline, with or without a UI framework. Angular-specific patterns live in angular; unit and component specs in angular-testing; Playwright e2e specs in generating-e2e-tests.
 ---
 
 # TypeScript
@@ -45,7 +45,9 @@ per file. The TypeScript delta:
   anything a second file imports gets its own file.
 - **Which suffixes exist is a framework/tooling question**, not a language one.
   Take the list from the generator's configuration; for Angular, see `angular`.
-- Tests are `<subject>.spec.ts` beside `<subject>.ts`.
+- Unit tests are `<subject>.spec.ts` beside `<subject>.ts`. Playwright e2e
+  specs are the named exception: they test flows, not source files, so they
+  follow the e2e suite's own layout — see `generating-e2e-tests`.
 
 ## Type system
 

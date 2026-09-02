@@ -1,6 +1,6 @@
 ---
 name: generating-e2e-tests
-description: Write or modify Playwright end-to-end tests. Use only in a confirmed Playwright e2e project (a playwright.config.* exists) or when the user explicitly asks for a Playwright/e2e test. Covers coverage scope, spec structure, page objects, and API teardown of created data on shared environments. Not for unit tests, component tests, API-only test suites, or interactive browser automation.
+description: Write or modify Playwright end-to-end tests. Use only in a confirmed Playwright e2e project (a playwright.config.* exists) or when the user explicitly asks for a Playwright/e2e test. Covers coverage scope, spec structure, page objects, and API teardown of created data on shared environments. Layers on frontend-foundations and typescript, and supersedes angular-testing for e2e specs. Not for unit tests, component tests, API-only test suites, or interactive browser automation.
 ---
 
 # Generating a Playwright e2e test
@@ -11,7 +11,24 @@ Three rules drive everything:
 2. **Every test cleans up the data it creates** — including when it fails mid-flow. On a shared environment, a test that creates or mutates a record tears it down via API in `afterEach`. See `references/data-teardown.md`.
 3. **The test project's own documentation wins.** Where the e2e project's `CLAUDE.md` / `AGENTS.md` / `README.md` conflicts with this skill, follow the project. This skill supplies defaults for what they leave unspecified.
 
-## Scope — what to cover
+## How this skill layers
+
+> Read the `frontend-foundations` skill first — it is the base layer here as
+> everywhere — and follow the `typescript` skill for every `.ts` file in the
+> suite. Do **not** load `angular-testing`: it owns unit and component specs
+> only.
+
+Deliberate e2e exceptions to those skills' rules, with their reasons:
+
+- **Run-unique randomized keys (UUID/timestamp) are required** — fixed values
+  collide across parallel workers and concurrent runs. Randomness stays in
+  identity keys; assertions remain deterministic.
+- **Suite layout (`tests/<verb>-<entity>.spec.ts`) replaces colocation** —
+  e2e specs test flows, not source files.
+- **Raw timeout literals** (`test.setTimeout(60_000)`) — no injected time
+  provider exists here; the value is a per-describe budget, not logic.
+- **Playwright's `test`, not `it`**, sentence-case `test.step` titles, and
+  optional `// Arrange / Act / Assert` markers in long linear flows.
 
 E2e tests are slow to run and expensive to keep green, so this is not where coverage goes to be exhaustive.
 

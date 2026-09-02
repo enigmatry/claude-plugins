@@ -4,7 +4,7 @@ The failure this guards against: **the server commits the record but the test ne
 
 ## Find the capture util first
 
-The capture machinery is identical for every entity, so it belongs in the project, not hand-written into each spec. Look for `utils/create-capture.ts` or the project's equivalent; if there isn't one, create it once from the appendix and use it everywhere after that.
+The capture machinery is identical for every entity, so it belongs in the project, not hand-written into each spec. Look for `utils/create-capture.ts` or the project's equivalent; if there isn't one, create the files in the appendix once and use them everywhere after that.
 
 It provides three things:
 
@@ -12,15 +12,16 @@ It provides three things:
 - `armCapture(page, endpoint, field, value)` — returns `{ dispatched, result }`. Neither promise ever rejects.
 - `expectCreated(result)` — rethrows a captured failure at the point the test reads it.
 
-The per-entity page-object method is then a one-liner:
+The per-entity page-object member is a one-line delegate:
 
 ```typescript
-armCreateCapture(uniqueKey: string): CreateCapture {
-  return armCapture(this.page, new URL('/api/items', this.baseUrl), 'name', uniqueKey);
-}
+readonly armCreateCapture = (uniqueKey: string): CreateCapture =>
+  armCapture(this.page, new URL('/api/items', this.baseUrl), 'name', uniqueKey);
 ```
 
 ## In the spec
+
+Order is the whole point: the run-marked key exists before anything is typed, the capture is armed before the click and kept where teardown can reach it, and the result is read after the click so a failure rethrows inside the test.
 
 ```typescript
 let uniqueKey: string | undefined;
@@ -34,12 +35,12 @@ test.beforeEach(() => {
 });
 
 test('adds an item', async ({ itemPage }) => {
-  uniqueKey = uniqueName('item');                  // 1. run-marked value exists first
+  uniqueKey = uniqueName('item');
   await itemPage.fillName(uniqueKey);
 
-  capture = itemPage.armCreateCapture(uniqueKey);  // 2. armed before the click, retained
-  await itemPage.clickSave();                      // 3. act
-  created = expectCreated(await capture.result);   // 4. resolve, rethrowing here
+  capture = itemPage.armCreateCapture(uniqueKey);
+  await itemPage.clickSave();
+  created = expectCreated(await capture.result);
 
   await expect(itemPage.getRow(uniqueKey)).toBeVisible();
 });
@@ -47,10 +48,10 @@ test('adds an item', async ({ itemPage }) => {
 
 ## Teardown
 
+Both promises resolve whether or not the test reached its own `await`, so teardown awaits them without `.catch` juggling. The fallback runs only on dispatch proof: no observed create request means nothing to clean up, and a lookup would risk matching another row.
+
 ```typescript
 test.afterEach(async ({ request }) => {
-  // The test may have failed before it awaited the capture. Awaiting the
-  // result is safe — it resolves either way, so no `.catch` juggling.
   const settled = await capture?.result;
   const record = created ?? (settled && 'record' in settled ? settled.record : undefined);
 
@@ -59,8 +60,6 @@ test.afterEach(async ({ request }) => {
     return;
   }
 
-  // No id. Fall back only when the create was actually dispatched — otherwise
-  // there is nothing to clean up, and a lookup risks matching another row.
   const dispatch = await capture?.dispatched;
   if (dispatch && uniqueKey) {
     await deleteItemByName(request, uniqueKey, dispatch);
@@ -107,119 +106,148 @@ Per entity, alongside the page object's `armCreateCapture`:
 
 ## Appendix — creating the capture util
 
-Only when the project has none. Write it once, then the rest of this file is all a spec needs.
+Only when the project has none. Four files: one exported declaration each, per `typescript` → *Files and declarations*, with the contract types in a theme-named file because specs, page objects and cleanup helpers all import them. Write them once, then the rest of this file is all a spec needs.
+
+The code follows `frontend-foundations` and `typescript` unchanged — no casts (response bodies are narrowed through a type guard), braces on every clause, arrow functions throughout, named durations. The reasons behind its shape live here rather than in comments:
+
+- **Both listeners are armed synchronously** inside `armCapture`, so the caller's click can't outrun them.
+- **Origin + pathname match exactly.** `endsWith` also matches unrelated endpoints.
+- **The correlation field is compared for exact equality, per declared media type.** The media type is compared as its essence — parameters stripped, case folded — because `includes` also matches a type smuggled into a parameter and misses valid uppercase. Substring matching on the body would pick up a concurrent worker's create against the same endpoint. A repeated form field is ambiguous because servers differ on which occurrence they bind. Multipart, a missing or unknown content type, or an unparseable body fails closed: the create goes uncaptured, and its run-marked key lets the sweep reclaim the row.
+- **Neither promise rejects.** A rejection would land during the awaited click, before the test attaches a handler — an unhandled rejection. `dispatched` resolves to `undefined` when no request was observed or its headers were unavailable (page already closed), which keeps the fallback off. `result` carries the failure as a value for `expectCreated` to rethrow.
+- **`timeout` is always bounded.** Teardown awaits both promises and must not hang the run.
+- **`uniqueName` fails fast without `E2E_RUN_ID`.** Stamp it once in `globalSetup` (`process.env.E2E_RUN_ID ??= randomUUID().slice(0, runIdLength)`); minting `e2e-undefined-…` keys would leave rows no sweep can tie back to a run.
 
 ```typescript
-// utils/create-capture.ts
-import type { Page, Request } from '@playwright/test';
-import { randomUUID } from 'node:crypto';
-
+// utils/create-capture-contracts.ts
 export interface CreatedRecord { id: string; url: string; headers: Record<string, string> }
 export interface DispatchedCreate { url: string; headers: Record<string, string> }
 export type CaptureResult = { record: CreatedRecord } | { error: Error };
 
-export interface CreateCapture {   // neither promise ever rejects
+export interface CreateCapture {
   dispatched: Promise<DispatchedCreate | undefined>;
   result: Promise<CaptureResult>;
 }
+```
 
-// runId is stamped once in globalSetup — `process.env.E2E_RUN_ID ??= randomUUID().slice(0, 8)`
-// — and read from env. Fail fast rather than mint `e2e-undefined-…` keys that
-// no sweep can tie back to a run.
-export const uniqueName = (prefix: string) => {
+```typescript
+// utils/unique-name.ts
+import { randomUUID } from 'node:crypto';
+
+const randomSuffixLength = 8;
+
+export const uniqueName = (prefix: string): string => {
   const runId = process.env.E2E_RUN_ID;
-  if (!runId) throw new Error('E2E_RUN_ID is not set. Stamp it in globalSetup before any test runs.');
-  return `e2e-${runId}-${prefix}-${randomUUID().slice(0, 8)}`;
+  if (!runId) {
+    throw new Error('E2E_RUN_ID is not set. Stamp it in globalSetup before any test runs.');
+  }
+  return `e2e-${runId}-${prefix}-${randomUUID().slice(0, randomSuffixLength)}`;
 };
+```
+
+```typescript
+// utils/expect-created.ts
+import type { CaptureResult, CreatedRecord } from './create-capture-contracts';
 
 export const expectCreated = (result: CaptureResult): CreatedRecord => {
-  if ('error' in result) throw result.error;
+  if ('error' in result) {
+    throw result.error;
+  }
   return result.record;
 };
+```
 
-// `timeout` is always bounded — teardown resolves these promises and must not hang the run.
-export function armCapture(
-  page: Page, endpoint: URL, field: string, value: string, timeout = 15_000,
-): CreateCapture {
-  const isOurCreate = (request: Request) => {
-    if (request.method() !== 'POST') return false;
+```typescript
+// utils/create-capture.ts
+import type { Page, Request, Response } from '@playwright/test';
+import type { CaptureResult, CreateCapture, DispatchedCreate } from './create-capture-contracts';
 
+const defaultCaptureTimeoutMilliseconds = 15_000;
+
+export const armCapture = (
+  page: Page, endpoint: URL, field: string, value: string, timeout = defaultCaptureTimeoutMilliseconds,
+): CreateCapture => {
+  const isOurCreate = (request: Request): boolean => {
+    if (request.method() !== 'POST') {
+      return false;
+    }
     const url = new URL(request.url());
-    // Exact origin + pathname. `endsWith` also matches unrelated endpoints.
-    if (url.origin !== endpoint.origin || url.pathname !== endpoint.pathname) return false;
-
-    // Exact field equality, so a concurrent worker's create against the same
-    // endpoint can't be picked up as ours.
+    if (url.origin !== endpoint.origin || url.pathname !== endpoint.pathname) {
+      return false;
+    }
     return postFieldEquals(request, field, value);
   };
 
-  // Called synchronously, so both listeners are armed before the caller clicks.
   const requestPromise = page.waitForRequest(isOurCreate, { timeout });
-  const responsePromise = page.waitForResponse(r => isOurCreate(r.request()), { timeout });
+  const responsePromise = page.waitForResponse((response) => isOurCreate(response.request()), { timeout });
 
   return {
-    // Proof the create went out, plus the auth/tenant context the fallback needs
-    // — the response path is exactly what failed when the fallback runs.
-    dispatched: (async () => {
-      try {
-        const request = await requestPromise;
-        return { url: request.url(), headers: await request.allHeaders() };
-      } catch {
-        // No dispatch observed, or its headers were unavailable (page already
-        // closed). Resolving to undefined keeps the fallback off; a committed
-        // row still carries the run marker, so the sweep reclaims it.
-        return undefined;
-      }
-    })(),
-
-    // Failures travel as a value. A rejection would land during the awaited
-    // click, before the test attaches a handler — an unhandled rejection.
-    result: (async (): Promise<CaptureResult> => {
-      try {
-        const response = await responsePromise;
-        if (!response.ok()) {
-          throw new Error(`Create failed: ${response.status()} ${response.statusText()}`);
-        }
-        const body = (await response.json()) as { id?: string };
-        if (!body.id) {
-          throw new Error('Create response did not include an id.');
-        }
-        const headers = await response.request().allHeaders();
-        return { record: { id: body.id, url: response.url(), headers } };
-      } catch (error) {
-        return { error: error as Error };
-      }
-    })(),
+    dispatched: observeDispatch(requestPromise),
+    result: observeResult(responsePromise),
   };
-}
+};
 
-// Exact-field equality only — never substring matching. Bodies are parsed
-// per their declared content type; anything else (multipart, missing or
-// unknown content type, unparseable body) fails closed: the create goes
-// uncaptured, and its run-marked key lets the sweep reclaim the row.
-const postFieldEquals = (request: Request, field: string, value: string) => {
+const observeDispatch = async (requestPromise: Promise<Request>): Promise<DispatchedCreate | undefined> => {
+  try {
+    const request = await requestPromise;
+    return { url: request.url(), headers: await request.allHeaders() };
+  } catch {
+    // Not observed, or the page closed first: no dispatch proof, so the fallback stays off.
+    return undefined;
+  }
+};
+
+const observeResult = async (responsePromise: Promise<Response>): Promise<CaptureResult> => {
+  try {
+    const response = await responsePromise;
+    if (!response.ok()) {
+      return { error: new Error(`Create failed: ${response.status()} ${response.statusText()}`) };
+    }
+    const id = createdId(await response.json());
+    if (!id) {
+      return { error: new Error('Create response did not include an id.') };
+    }
+    return { record: { id, url: response.url(), headers: await response.request().allHeaders() } };
+  } catch (thrown) {
+    return { error: toError(thrown) };
+  }
+};
+
+const createdId = (body: unknown): string | undefined => {
+  const id = isRecord(body) ? body['id'] : undefined;
+  return typeof id === 'string' ? id : undefined;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const toError = (thrown: unknown): Error =>
+  thrown instanceof Error ? thrown : new Error(String(thrown));
+
+const postFieldEquals = (request: Request, field: string, value: string): boolean => {
   const postData = request.postData();
-  if (!postData) return false;
-  // Media-type essence: parameters stripped, case folded — `includes` would
-  // also match a type smuggled into a parameter, and miss valid uppercase.
-  const contentType = request.headers()['content-type'] ?? '';
-  const mediaType = contentType.split(';', 1)[0].trim().toLowerCase();
+  if (!postData) {
+    return false;
+  }
+  const [mediaTypeEssence = ''] = (request.headers()['content-type'] ?? '').split(';', 1);
+  const mediaType = mediaTypeEssence.trim().toLowerCase();
 
   if (mediaType === 'application/json') {
-    try {
-      return (JSON.parse(postData) as Record<string, unknown>)[field] === value;
-    } catch {
-      return false;
-    }
+    return jsonFieldEquals(postData, field, value);
   }
-
   if (mediaType === 'application/x-www-form-urlencoded') {
-    // A repeated field is ambiguous — servers differ on which value they
-    // bind — so only a single, exactly-equal decoded value counts as ours.
     const values = new URLSearchParams(postData).getAll(field);
     return values.length === 1 && values[0] === value;
   }
-
   return false;
+};
+
+const jsonFieldEquals = (postData: string, field: string, value: string): boolean => {
+  try {
+    const parsed: unknown = JSON.parse(postData);
+    return isRecord(parsed) && parsed[field] === value;
+  } catch {
+    // Unparseable body: not provably ours, so it fails closed.
+    return false;
+  }
 };
 ```

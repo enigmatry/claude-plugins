@@ -1,6 +1,6 @@
 ---
 name: generating-e2e-tests
-description: Write or modify Playwright end-to-end tests. Use only in a confirmed Playwright e2e project (a playwright.config.* exists) or when the user explicitly asks for a Playwright/e2e test. Covers coverage scope, spec structure, page objects, and API teardown of created data on shared environments. Layers on frontend-foundations and typescript, and supersedes angular-testing for e2e specs. Not for unit tests, component tests, API-only test suites, or interactive browser automation.
+description: Write or modify Playwright end-to-end tests. Use only for a spec that imports from @playwright/test (directly or via the suite's fixtures) in a project with a playwright.config.*, or when the user explicitly asks for a Playwright/e2e test. Covers coverage scope, spec structure, page objects, and API teardown of created data on shared environments. Layers on frontend-foundations and typescript, and supersedes angular-testing for e2e specs. Not for unit tests, component tests, API-only test suites, or interactive browser automation.
 ---
 
 # Generating a Playwright e2e test
@@ -18,17 +18,37 @@ Three rules drive everything:
 > suite. Do **not** load `angular-testing`: it owns unit and component specs
 > only.
 
-Deliberate e2e exceptions to those skills' rules, with their reasons:
+### What counts as a Playwright spec
+
+Classify by the spec, never by the project. A `playwright.config.*` proves the
+package has an e2e suite; it says nothing about a colocated Vitest spec in the
+same package, which stays with `angular-testing`. A spec is Playwright's when it
+imports `test`/`expect` from `@playwright/test` — directly or through a fixtures
+module that extends it — and lives in the suite's own tree (the config's
+`testDir`, typically `tests/`) rather than beside a source file.
+
+### Deliberate exceptions
+
+This is the complete list. Everything not named here — comments, braces, the
+two allowed casts, arrow-property class members, one declaration per file —
+applies unchanged, and the reference code in `references/` follows it.
 
 - **Run-unique randomized keys (UUID/timestamp) are required** — fixed values
   collide across parallel workers and concurrent runs. Randomness stays in
-  identity keys; assertions remain deterministic.
+  identity keys; assertions remain deterministic. (`angular-testing` forbids
+  randomness; it doesn't apply here, but a reviewer reaching for it should know
+  why.)
 - **Suite layout (`tests/<verb>-<entity>.spec.ts`) replaces colocation** —
   e2e specs test flows, not source files.
-- **Raw timeout literals** (`test.setTimeout(60_000)`) — no injected time
-  provider exists here; the value is a per-describe budget, not logic.
-- **Playwright's `test`, not `it`**, sentence-case `test.step` titles, and
-  optional `// Arrange / Act / Assert` markers in long linear flows.
+- **Raw duration literals handed to Playwright** — `test.setTimeout(60_000)` on
+  a describe, a `{ timeout }` on a `waitFor*`, the named default in the capture
+  util. No injected time provider exists in a Playwright suite; these are
+  budgets the runner enforces, not logic under test. Name any duration that
+  isn't a one-off per-describe budget.
+- **Playwright's `test`, not `it`**, with sentence-case `test.step` titles.
+  Steps are the structure — they execute and appear in the report — so
+  `// Arrange / Act / Assert` comments are never written, the same as everywhere
+  else in this plugin.
 
 E2e tests are slow to run and expensive to keep green, so this is not where coverage goes to be exhaustive.
 
@@ -64,7 +84,7 @@ Don't inventory the whole suite. One close sibling spec beats five archetypes.
 4. **Authentication** through the project's mechanism (auto-fixture, storage state, explicit fixture). No hand-rolled login in a spec. Use only tags that already exist in the suite — don't invent `@smoke`/`@regression`.
 5. **`beforeEach`** — reset the capture variables, then navigate with the existing navigation helper. Prefer navigating by a unique key (email, code) over a name search that may paginate.
 6. **Unique data** from the project's generators, or a timestamp/UUID, so parallel workers can't collide. If the value must later be found through the app's own search, check how that search tokenizes before picking the generator.
-7. **Body** — one `test.step('Sentence case description', …)` per logical action; web-first assertions on `Locator`s returned by page-object getters (`await expect(itemPage.getRow(name)).toBeVisible()`). Long linear flows may use `// Arrange / // Act / // Assert` comments instead.
+7. **Body** — one `test.step('Sentence case description', …)` per logical action; web-first assertions on `Locator`s returned by page-object getters (`await expect(itemPage.getRow(name)).toBeVisible()`). Structure comes from steps, never from `// Arrange / Act / Assert` comments.
 8. **Teardown** for anything the test created or mutated — follow `references/data-teardown.md`.
 
 ### Split before the file gets long
@@ -112,6 +132,6 @@ Load these when the task reaches them, not upfront:
 
 - Specs: `tests/<verb>-<entity>[-<subentity>].spec.ts`
 - Page objects: `pages/<name>-page.ts` (class `<Name>Page`), registered in `fixtures/index.ts`
-- Cleanup helpers and generators: `utils/<entity>-cleanup.ts`, `utils/generators.ts`, a header-replay helper
+- Cleanup helpers and generators: `utils/<entity>-cleanup.ts`, `utils/generators.ts`, a header-replay helper, the capture util (`utils/create-capture.ts` and its siblings — see `references/data-teardown.md`)
 - Static data: `test-data/<entities>.json`
 - Test-id additions: the application's frontend source

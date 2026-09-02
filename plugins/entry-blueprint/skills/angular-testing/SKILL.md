@@ -8,8 +8,12 @@ description: Angular and TypeScript unit testing on Vitest — the standard runn
 > Read `frontend-foundations` first — it owns naming, code shape and
 > never-silencing-a-signal, all of which bind spec files too.
 
-**Scope: unit and component specs only.** A spec in a confirmed Playwright e2e
-project (a `playwright.config.*` exists) is not bound by this file —
+**Scope: unit and component specs only.** Classify by the spec, not the
+package: a `playwright.config.*` proves an e2e suite exists, not that a given
+spec belongs to it, and a colocated Vitest spec beside a Playwright suite is
+still this file's. A spec that imports `test`/`expect` from `@playwright/test`
+(directly or through the suite's fixtures module) and lives in the e2e tree
+rather than beside a source file is not bound by this file —
 `generating-e2e-tests` owns it, including its deliberate departures from the
 rules below.
 

@@ -10,7 +10,7 @@ Claude Code plugin marketplace by [Enigmatry](https://github.com/enigmatry).
 
 ### entry-blueprint
 
-Skills, workflows, MCP servers and a code-review Stop hook for .NET 9 + Angular
+Skills, workflows, MCP servers and a code-review Stop hook for .NET 10 + Angular
 vertical-slice projects built on the
 [Enigmatry Entry Blueprint](https://github.com/enigmatry) starter template.
 
@@ -20,7 +20,7 @@ vertical-slice projects built on the
 |---|---|
 | `entry-blueprint:aspnet-rest-apis` | .NET Web API features: MediatR, Autofac, FluentValidation, vertical slices |
 | `entry-blueprint:csharp-coding-standards` | Any C# file: naming, formatting, nullability |
-| `entry-blueprint:csharp-unit-tests` | C# tests: NUnit, FluentAssertions, NSubstitute, Verify |
+| `entry-blueprint:csharp-unit-tests` | C# tests: NUnit 4, Shouldly, FakeItEasy, Verify, builders and code books, Testcontainers integration tests |
 | `entry-blueprint:frontend-foundations` | Every front-end task: comments, naming, code shape, failure handling, security |
 | `entry-blueprint:typescript` | Any TypeScript file: naming, type system, async/await, module boundaries |
 | `entry-blueprint:angular` | Angular components, services, directives, templates: signals, standalone, `inject()` |
@@ -77,6 +77,14 @@ project's `CLAUDE.md`. Add one like this:
 - Azure DevOps project: `Your Project Name`
 - Default branch: `master`
 ```
+
+`entry-blueprint:csharp-unit-tests` reads repo-specific testing facts (fixture
+base classes, builder and code-book locations, clock seams, database mode, known
+legacy) from **`.claude/project-notes/csharp-unit-tests.md`** in the host
+project. Create it from
+`skills/csharp-unit-tests/references/project-notes.template.md` — the skill
+does this itself when the file is missing. Project rules that differ from the
+standard go in that file, never in a copy of the skill.
 
 ## Installation
 

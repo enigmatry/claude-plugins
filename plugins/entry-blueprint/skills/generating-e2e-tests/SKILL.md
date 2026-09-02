@@ -58,6 +58,8 @@ applies unchanged, and the reference code in `references/` follows it.
   `// Arrange / Act / Assert` comments are never written, the same as everywhere
   else in this plugin.
 
+## Coverage scope
+
 E2e tests are slow to run and expensive to keep green, so this is not where coverage goes to be exhaustive.
 
 - Cover the **happy path of each user-facing flow**.

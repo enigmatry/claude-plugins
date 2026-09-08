@@ -1,50 +1,63 @@
 ---
 name: csharp-unit-tests
-description: Best practices for C# unit and integration testing in Enigmatry Entry projects — NUnit 4, Shouldly, FakeItEasy, Verify.NUnit, builders and code books, the Enigmatry.Entry test packages, and WebApplicationFactory + Testcontainers.MsSql + Respawn. Use this when writing or reviewing C# tests.
+description: Best practices for C# unit and integration testing in Enigmatry Entry projects — NUnit 4, Shouldly, FakeItEasy, Verify.NUnit, builders and code books, FluentValidation validator fixtures, and the project's documented integration profile (WebApplicationFactory with Testcontainers.MsSql + Respawn, or an in-process host without a database). Reads repo-specific facts from the host project's notes. Use this when writing or reviewing C# tests.
 ---
 
 # C# Unit and Integration Testing (Enigmatry Entry)
 
-**This file is the shared Enigmatry standard, distributed through the `entry-blueprint` plugin — don't copy it into a repo or edit it per project.** Everything project-specific — base-class names, helper APIs, seeded test users, builder and code-book locations, clock seams, known legacy — lives in the host repo's **project notes** at `.claude/project-notes/csharp-unit-tests.md`. Read that file before writing tests. If the repo has none yet, create it from `${CLAUDE_PLUGIN_ROOT}/skills/csharp-unit-tests/references/project-notes.template.md` and fill in only what you can verify in the repo. When a project needs a different rule, change its project notes, not this file; that is what keeps the standard from drifting.
+**This file is the shared Enigmatry standard, distributed through the `entry-blueprint` plugin — don't copy it into a repo or edit it per project.** Everything project-specific — base-class names, helper APIs, seeded test users, builder and code-book locations, clock seams, integration profile, known legacy — lives in the host repo's **project notes** at `<repo-root>/.claude/project-notes/csharp-unit-tests.md`. Resolve the repository root that contains the target test project (in a monorepo, the notes for that project); don't assume the working directory is the root. Read the notes before writing tests.
+
+If the repo has no notes yet: while **writing** tests, create the file from `${CLAUDE_PLUGIN_ROOT}/skills/csharp-unit-tests/references/project-notes.template.md`, fill in only what you can verify in the repo, leave the rest as open questions, and tell the user. While **reviewing** or explaining, read the template as an inspection checklist and don't create files. When a project needs a different rule, change its project notes, not this file; that is what keeps the standard from drifting.
+
+## Scope and precedence
+
+- The task and the host repo's own instructions (`CLAUDE.md`, project notes) decide *which* tests to write. Loading this skill never means adding tests at a level the task doesn't call for — most tasks need unit tests only; the [integration reference](references/integration-tests.md) is read when the task touches an integration fixture or harness.
+- **Org standard, not negotiable per project:** NUnit 4, Shouldly, FakeItEasy, Verify.NUnit, and every convention in this file that isn't marked as project-selectable. Libraries in the legacy list below are converted on touch.
+- **Project-selectable, recorded in the project notes:** the integration profile (real SQL Server, in-process host without a database, or EF in-memory — see [Integration tests](#integration-tests)), the code-book shape and naming, fixture-helper placement, test-project layout, the clock seam's concrete type. Where the notes are silent, infer the established choice from package references, configuration and the maintained fixtures before applying the default named here.
+- **A test-writing task is not a migration.** Convert legacy constructs in the file you touch (see the legacy list), never restructure a project's harness, layout or profile as a side effect. A wider migration is its own task.
 
 ## Stack
 
 | Purpose | Library | Notes |
 |---|---|---|
 | Test runner | **NUnit 4** + **NUnit.Analyzers** | `[Test]`, `[TestCase]`, `[TestCaseSource]`. The org baseline — don't bump the test-framework major as part of ordinary test work. |
-| Assertions | **Shouldly** | `x.ShouldBe(y)`, `ShouldBeTrue`, `ShouldNotBeNull`, `ShouldBeOfType`, `ShouldBeEmpty` |
+| Assertions | **Shouldly** | `x.ShouldBe(y)`, `ShouldBeTrue`, `ShouldNotBeNull`, `ShouldBeOfType`, `ShouldBeEmpty`. Specialised verification APIs (Verify, `FluentValidation.TestHelper`) sit beside it, not instead of it. |
 | Mocking | **FakeItEasy** | `A.Fake<T>()`, `A.CallTo(...)`, `.MustHaveHappened...()` |
 | Mocking `IQueryable` | **MockQueryable.FakeItEasy** | `.BuildMock()` to back a repository's `QueryAll()` |
 | Snapshots | **Verify.NUnit** | complex objects, DTOs/responses, documents, integration responses |
 | Test data generation | **AutoFixture** / **Bogus** | only where the values genuinely don't matter — see [Determinism](#determinism) |
-| Integration host | **`Microsoft.AspNetCore.Mvc.Testing`** (`WebApplicationFactory<Program>`) | real API pipeline, real DI container |
-| Integration database | **Testcontainers.MsSql** + **Respawn** | a real SQL Server; **never** the EF Core in-memory provider |
+| Integration host | **`Microsoft.AspNetCore.Mvc.Testing`** (`WebApplicationFactory<Program>`) | real API pipeline, real DI container, with or without a database — the profile is project-selectable |
+| Integration database (SQL Server profile) | **Testcontainers.MsSql** + **Respawn** | the default for a new project whose tests must prove SQL Server persistence |
 
-**Never introduce** (all present in some older Enigmatry suites — legacy, don't copy, convert on touch):
+**Legacy — never introduce, convert on touch** (all present in some older Enigmatry suites):
 
 - `FluentAssertions` (`.Should().Be(...)`) — Shouldly only
-- `NSubstitute` (`Substitute.For<T>()`) and `Moq` (`new Mock<T>()`, `.Setup`, `It.IsAny`, `.Object`, `.Verify(..., Times.X)`) — FakeItEasy only
-- Classic NUnit asserts (`Assert.AreEqual`, `Assert.IsTrue`, `ClassicAssert`) and the constraint model (`Assert.That(x, Is.EqualTo(y))`) — Shouldly only
-- The EF Core in-memory / SQLite provider as a stand-in for SQL Server — it silently accepts queries and constraints SQL Server rejects
+- `NSubstitute` (`Substitute.For<T>()`), `Moq` (`new Mock<T>()`, `.Setup`, `It.IsAny`, `.Object`, `.Verify(..., Times.X)`) and any other mocking library — FakeItEasy only
+- Classic NUnit asserts (`Assert.AreEqual`, `Assert.IsTrue`, `ClassicAssert`) and the constraint model (`Assert.That(x, Is.EqualTo(y))`) for state assertions — Shouldly only
 - MSTest or xUnit (`[Fact]`, `[Theory]`, `[MemberData]`) — some repos still contain an isolated xUnit project; the project notes list them if so
 
-A single test file must never import two mocking libraries or two assertion libraries. If you touch a legacy fixture, finish the conversion in that file.
+A single test file never imports two general-purpose assertion libraries or two mocking libraries. "Convert on touch" means: when you edit a fixture that still uses a legacy library, convert that fixture's remaining legacy calls in the same change; don't sweep the suite.
 
 ## Coverage expectations
 
-Every new or materially changed handler, validator, domain rule, or mapping needs focused tests — the happy path plus the validation, boundary and error paths that actually carry risk. "It's covered by an existing integration test" is only true if that test would fail when the new behaviour breaks.
+- **Unit tests** aim at every meaningful branch of new or materially changed business logic — handlers, validators, domain rules, mappings — including the boundary, invalid, empty and null inputs each rule actually distinguishes, and both sides of every boundary. Trivial pass-through behaviour (a value carried command → entity → DTO) and generated code get no dedicated test unless they carry a specific risk.
+- **Integration tests** cover representative happy paths plus the failures whose value is in the plumbing — routing, authorization, validator registration, serialization, persistence, error translation — and every distinct error contract a client reacts to (a `4xx` the frontend handles specifically, an error surfacing from a deep layer). Exhaustive business-rule and input matrices stay in unit tests. "It's covered by an existing integration test" is only true if that test would fail when the new behaviour breaks.
 
-Every test must be able to fail when the behaviour it protects breaks. Assert an observed outcome or interaction — never a tautology or a value copied straight from the arrange. When adding a test, observe it failing for the intended reason (before or while implementing the production change) before considering it complete — fail against the pre-fix behaviour or a temporary mutation of the protected production code, with a failure message naming the broken contract; flipping the expected value, or Verify failing only because no `.verified.txt` exists yet, proves nothing.
+**Every test must be able to fail when the behaviour it protects breaks.** Assert an independently observed outcome or interaction against an explicit expectation — never a tautology, and never only that the setup produced the value you assigned. For a bug fix, watch the test fail against the original defect before fixing. For a test added to existing correct behaviour, be able to say which regression it detects; a focused temporary mutation of the production code is a good way to check when in doubt. Flipping the expected value, or Verify failing only because no `.verified.txt` exists yet, proves nothing.
+
+**Match assertion precision to the contract.** When exact content, identity, order or count matters, assert it exactly: `ShouldContain("color")` also passes on `colored`, and `items.Any(i => i.Text.Contains(...)).ShouldBeTrue()` passes when the right text sits on the wrong element. Assert the whole value with `ShouldBe`, or project the relevant elements and compare the sequence. Use containment or existence assertions only when containment or existence *is* the requirement.
 
 ## Project and file layout
 
-- One test project per production project: `<Project>.Tests`. Mirror the production folder structure inside it.
-- Name test files and classes with the `Fixture` suffix: `Section.cs` → `SectionFixture.cs`. The name must carry the subject type or concept — never a bare `Fixture` (unsearchable).
-- **Never add `[TestFixture]`** — NUnit discovers any non-abstract class that has `[Test]` methods, whatever it's called, and an abstract base with `[TestFixture]` on it changes nothing. The `Fixture` suffix is a naming convention, not a discovery mechanism. (The attribute is only needed when it carries construction data — `[TestFixture(arg)]`, a generic fixture's type arguments, or `[TestFixtureSource]`.)
-- **Every fixture carries `[Category("unit")]` or `[Category("integration")]`** so CI can filter (`dotnet test --filter "TestCategory=unit"`).
-- Prefer `internal sealed` for new unit fixtures. NUnit discovers `internal` fixtures perfectly well — `public` is **not** required for discovery. Integration fixtures inheriting a public base follow the base's accessibility; match the surrounding project rather than mass-changing.
-- **Name the subject after its type, never `_sut`/`sut`**: `private EmployeeService _employeeService;`, not `private EmployeeService _sut;`. Same for dependencies — `_contractRepository`, not `_repo2`.
-- Declare the subject and its dependencies as private `_camelCase` fields — never PascalCase `{ get; set; }` auto-properties (legacy style). Add `= null!` to `[SetUp]`-assigned fields **only when the test project has `Nullable` enabled**; projects with nullable disabled declare them plainly.
+- One test project per production project: `<Project>.Tests`, mirroring the production folder structure. A project with an established different layout keeps it (project notes); don't restructure during test work.
+- **One fixture per production type**, named after it with the `Fixture` suffix: `Section.cs` → `SectionFixture.cs`. The name must carry the subject type or concept — never a bare `Fixture` (unsearchable). Integration fixtures follow the endpoint or workflow they exercise instead.
+- **A fixture growing past roughly 250 lines is a prompt to inspect, not a limit.** First apply the [duplication ladder](#reducing-duplication) — parameterize, extract `Arrange` helpers, move data into builders, books and `*Source` classes. Only when distinct behaviour groups still make the fixture hard to navigate, split it into fixtures named by group (`EmployeeServiceAuthorizationFixture`, `EmployeeServiceUpdatesFixture`). Never split just to satisfy a line count, and a long test fixture is not by itself evidence that the production class needs refactoring.
+- **`[TestFixture]`:** omit the parameterless attribute — NUnit discovers any class with `[Test]` methods, whatever its name, and an abstract base carrying `[TestFixture]` changes nothing. Keep it when it carries data: `[TestFixture(arg)]`, a generic fixture's type arguments, or `[TestFixtureSource]`. The `Fixture` suffix is a naming convention, not a discovery mechanism.
+- **Every fixture carries `[Category("unit")]` or `[Category("integration")]`** so CI can filter (`dotnet test --filter "TestCategory=unit"`). Adopt on touch in suites that don't have it yet.
+- New unit fixtures are `internal sealed`; NUnit discovers `internal` fixtures, `public` is a convention where a suite uses it. Match the surrounding project rather than mass-changing.
+- **Name the subject after its type, never `_sut`/`sut`**: `private EmployeeService _employeeService;`. Same for dependencies — `_contractRepository`, not `_repo2`.
+- Declare the subject and its dependencies as private `_camelCase` fields when the fixture shares them across tests — never PascalCase `{ get; set; }` auto-properties. Add `= null!` to `[SetUp]`-assigned fields **only when the test project has `Nullable` enabled**.
+- A helper type a fixture needs (a `Testable*` subclass, a stub, a builder) lives where the project notes say; the default is its own `internal sealed` file in the same mirrored folder.
 
 ## Naming — descriptive PascalCase, no underscores, no repeated context
 
@@ -81,9 +94,10 @@ public void ToStringReturnsEndValue()
 }
 ```
 
-**Prefer a single logical assertion per test.** Asserting two tightly-related properties of the same result is one concept and fine — though once a result object needs several assertions, `await Verify(...)` on the projected contract is usually the better trade — one assertion line, the whole contract pinned. Assertion count is the smell signal, not a licence to snapshot a larger object than the contract (see [Verify](#snapshot-testing-with-verifynunit)). Asserting unrelated outcomes is never fine — split the test, or collapse it with `[TestCase]`. Run one arrange→act→assert cycle per test; never re-mutate state and assert a second scenario in the same body.
-
-**Do not use `ShouldSatisfyAllConditions`** (or a stack of `ShouldContain`/`ShouldBe` calls) to bundle unrelated outcomes into one test — that is the multi-assertion smell, not an exception to it. Reach for [Verify](#snapshot-testing-with-verifynunit) when the whole result is a contract worth snapshotting; a growing stack of `ShouldBe`s on one DTO's fields is the signal, not a hard threshold.
+- **Keep the scenario-defining inputs visible in the test.** Arrange may take several lines; move setup into a builder, a code-book entry or an `Arrange` helper when it is incidental or repeated, and only when the helper's name and arguments still tell the reader what the scenario is. A one-line arrange is the happy outcome of good builders, not a rule to satisfy by hiding data.
+- **Act is one statement.** One arrange→act→assert cycle per test; never re-mutate state and assert a second scenario in the same body.
+- **Assert one logical outcome.** Two or three tightly-related properties of the same result are one concept and fine. Once one result needs more than about two property assertions, `await Verify(...)` on the projected contract is the better trade — one assertion line, the whole contract pinned (see [Verify](#snapshot-testing-with-verifynunit)). Asserting unrelated outcomes is never fine — split the test, or collapse it with `[TestCase]`.
+- **Do not use `ShouldSatisfyAllConditions`** (or a stack of `ShouldContain`/`ShouldBe` calls) to bundle unrelated outcomes into one test — that is the multi-assertion smell, not an exception to it.
 
 ## No branching on the scenario
 
@@ -106,25 +120,25 @@ Straightforward iteration in *arrange* (seeding several entities, building a lis
 
 ## Parameterized tests — [TestCase] and [TestCaseSource]
 
-**Scan for duplication before writing a new `[Test]` method.** Two or more tests that share body structure and differ only in literal values (strings, numbers, enum members) MUST be collapsed into one `[TestCase]`-parameterized method, even when their names differ.
+**Scan for duplication before writing a new `[Test]` method.** Tests that share body structure and differ only in literal values (strings, numbers, enum members) are one `[TestCase]`-parameterized method, even when their names differ. Scenarios that differ in *behaviour* stay separate tests.
 
 ```csharp
 // ❌ avoid — identical structure, only the expected value differs
-[Test] public void ActiveStatusHasCorrectName()   { ... status.Name.ShouldBe("Active"); }
-[Test] public void InactiveStatusHasCorrectName() { ... status.Name.ShouldBe("Inactive"); }
+[Test] public void ActiveStatusHasCorrectName()   { ... name.ShouldBe("Active"); }
+[Test] public void InactiveStatusHasCorrectName() { ... name.ShouldBe("Inactive"); }
 
 // ✅ correct
-[TestCase(UserStatusId.Active,   "Active")]
-[TestCase(UserStatusId.Inactive, "Inactive")]
-public void StatusHasCorrectName(UserStatusId id, string expected)
+[TestCase(UserStatus.Active,   "Active")]
+[TestCase(UserStatus.Inactive, "Inactive")]
+public void StatusHasCorrectName(UserStatus status, string expected)
 {
-    var status = UserStatus.FromValue(id.Value);
+    var name = status.ToDisplayName();
 
-    status.Name.ShouldBe(expected);
+    name.ShouldBe(expected);
 }
 ```
 
-Use `[TestCaseSource]` when the data is objects rather than literals, or is reused across fixtures:
+Use `[TestCaseSource]` when the data is objects rather than attribute-compatible literals, or is reused across fixtures:
 
 ```csharp
 [TestCaseSource(typeof(FindVisibleByIdSource), nameof(FindVisibleByIdSource.Get))]
@@ -140,32 +154,39 @@ For readable case names in the runner, rely on a positional `record`'s generated
 Before adding a test, look for structure to share instead of copy — in this order:
 
 1. **Collapse identical bodies into one parameterized test** (`[TestCase]` for literals, `[TestCaseSource]` + `*Source`/`*Data` for objects). Never leave two near-identical `[Test]` methods that differ only by input — a reviewer will send it back.
-2. **Extract a shared arrange/act/assert helper**: repeated arrange lines → a private `Arrange(...)` helper; a repeated invocation → `Act(...)`; a repeated verification → a named helper (`VerifyNoSave()`). The subject and its fakes are `[SetUp]` fields the helpers read and write.
+2. **Extract a shared arrange/act/assert helper**: repeated arrange lines → a private `Arrange(...)` helper; a repeated invocation → `Act(...)`; a repeated verification → a named assertion helper (`ShouldHaveNoSavedChanges()`) that expresses one reusable contract and keeps a useful failure message. The subject and its fakes are `[SetUp]` fields the helpers read and write.
 3. **Lift shared construction of a non-trivial dependency out of the fixtures** into one internal factory/builder called from each `[SetUp]` — don't paste the wiring into every fixture.
 4. **Move repeated object graphs into a Builder, repeated named objects and values into a code book, and repeated case sets into a `*Source`.**
 
 Duplication that varies only by data is a smell, not a style choice.
 
+**Arrange and act helpers return values; they don't assert the outcome.** A `ShouldNotBeNull()` inside a capture helper reports the failure at the wrong place and hides the behaviour check from the test body. Return the captured value and let the test assert; throw (`?? throw new InvalidOperationException("The provider was never called.")`) only for a genuinely broken arrangement.
+
+**Name repeated literals by role.** `"a"`/`"b"` values scattered through a fixture become `const string FirstItem`/`SecondItem` when the reader would otherwise have to infer which literal plays which part. Obvious boundary values (`0`, `-1`, `""`) stay visible inline.
+
 ## Test data
 
-Reusable mutable test objects are created fresh per use. Never hold an entity, DTO, collection, or other mutable object graph in a `static readonly` field or a fixture-lifetime field initializer — NUnit reuses one fixture instance for all its tests, so one test mutating the graph silently changes what a later test arranges. Return it from a builder, factory method, or expression-bodied property instead. Constants and immutable values are unaffected.
+Reusable mutable test objects are created fresh per use. Never hold an entity, DTO, collection, or other mutable object graph in a `static readonly` field or a fixture-lifetime field initializer — NUnit reuses one fixture instance for all its tests, so one test mutating the graph silently changes what a later test arranges. Return it from a builder, factory method, or expression-bodied member that **constructs a new graph on every access**; `=>` syntax alone guarantees nothing if the body returns a cached instance. Constants and immutable values are unaffected.
 
-### Builders — the default
+Two separate decisions govern test data: **how an object is constructed** (inline vs builder) and **where it is shared** (inline → fixture-local member → code book).
 
-Reusable entity/DTO construction goes into a fluent `*Builder`: `With*` methods returning `this`, a `Build()`, and an `implicit operator` to the built type so a builder can be passed straight where the entity is expected. Default every field to something valid so a test only sets what it cares about.
+### Construction — inline or builder
+
+Use a constructor or object initializer for simple data. Reusable entity/DTO construction with defaults goes into a fluent `*Builder`: `With*` methods returning `this`, a `Build()`, and an `implicit operator` to the built type so a builder can be passed straight where the entity is expected. Default every field to something valid so a test only sets what it cares about.
 
 ```csharp
 var user = new UserBuilder()
     .WithEmailAddress("john_doe@john.doe")
     .WithFullName("John Doe")
-    .WithStatusId(UserStatusId.Active);
+    .WithStatusId(UserStatusId.Active)
+    .Build();
 ```
 
-Build through the domain factory (`User.Create(command)`) rather than setting properties, so the entity's own invariants run. Prefer inline construction when an object is used by exactly one test; move it to a builder from the second use. **Builders are frequently shared across test projects — and in some repos live in a production assembly. Search for an existing one before writing a new one** (the project notes say where they live).
+Build valid objects through the domain factory (`User.Create(command)`) so the entity's own invariants run; a test of an *invalid* input constructs that input directly, without the factory refusing it in arrange. Call `.Build()` when the variable is used as the entity; rely on the implicit conversion only when passing the builder straight into a parameter. **Builders are frequently shared across test projects — and in some repos live in a production assembly. Search for an existing one before writing a new one** (the project notes say where they live).
 
-### Code books — named test data
+### Sharing — fixture-local member or code book
 
-A **code book** gives a recurring test object or value one name in one place, instead of the same literal or private `Build*` helper re-declared across fixtures. A book is a per-domain-type `internal static` class of expression-bodied entries, named by the *meaning* the entry carries in a test — `Some…`, `Another…`, `Expired…`, `NotFound…` — never by the test that first needed it. Because entries are `=>` members, every access yields a fresh object, so a shared entry can never leak one test's mutations into the next (the rule at the top of this section). Meaning-named value constants — a valid BSN, a valid IBAN, a max-length string — belong in the same book as the objects that use them.
+A **code book** gives a recurring test object or value one name in one place, instead of the same literal or private `Build*` helper re-declared across fixtures. A book is a per-domain-type `internal static` class of expression-bodied entries, named by the *meaning* the entry carries in a test — `Some…`, `Another…`, `Expired…`, `NotFound…` — never by the test that first needed it. Meaning-named value constants — a valid BSN, a valid IBAN, a max-length string — belong in the same book as the objects that use them.
 
 ```csharp
 internal static class Users
@@ -177,29 +198,37 @@ internal static class Users
     public static UserBuilder Deactivated => Some.WithStatusId(UserStatusId.Deactivated);
 }
 
-var user = Users.Deactivated.WithFullName("Jane Doe");
+var user = Users.Deactivated.WithFullName("Jane Doe").Build();
 ```
 
-The default shape in Entry projects is the one above: **entries return a pre-configured builder, not a finished entity**, so the domain factory still runs and callers keep chaining `With*`. Entries may compose entries from other books. A project may choose another shape — entries returning finished immutable objects, or C# 14 `extension(User)` static members so that `User.Some` reads like a member of the type — as long as entries stay fresh per access and named by meaning. The project notes say which shape the project uses and where its books live.
+The default shape in Entry projects is the one above: **entries return a pre-configured builder**, so the domain factory still runs and callers derive variants by chaining `With*`. A project may choose another shape — entries returning finished objects (with the book named exactly after the domain type and the type aliased, `using DomainUser = ...;`), or C# 14 `extension(User)` static members — as long as every access yields a fresh graph and entries are named by meaning. The project notes say which shape and naming the project uses and where its books live.
 
-Promotion follows the duplication ladder: construct inline while one test needs it → lift to a fixture-local expression-bodied member when the fixture reuses it → promote to a book entry the moment a second fixture needs the same shape or value. Adopt on touch: promote when you edit a fixture that duplicates a shape, don't sweep the suite.
+Rules that hold for every shape:
+
+- **One book per domain type.** A sub-object that needs its own graph gets its own book; books compose by reference (`Orders.Some` uses `Customers.Some`), never by inlining a second type's graph.
+- **Variants are new entries or `With*` chains, never mutation of a finished entry** — `Users.Some.Build()` followed by property assignments in the test hides what the scenario changed.
+- **Changing a widely used entry changes every test that uses it.** Inspect the consumers; when a close-but-different shape is needed, add a new entry.
+- **Role and outcome vocabulary goes to the book on first use** (`Some`, `Another`, `NotFound`, `Forbidden`): its value is a uniform vocabulary across fixtures, not reuse. Conversely, if the only honest name is the test that wanted it (`NewOrganizationWithoutUniqueName`), it is fixture data, not a book entry.
+
+Promotion follows the reuse: construct inline while one test needs it → lift to a fixture-local expression-bodied member when the fixture reuses it → promote to a book entry the moment a second fixture needs the same shape or value. Adopt on touch: promote when you edit a fixture that duplicates a shape, don't sweep the suite.
 
 ### `*Source` classes — `[TestCaseSource]` data sets
 
 - Name the class `*Source` and the method `Get()` (or `GetData(...)` when it needs runtime arguments); `yield return` one case per line, each optionally delegating to a named private helper.
-- **Prefer a dedicated `*Source` file per data set** — one class, one set. Don't collect many unrelated `[TestCaseSource]` sets as sibling methods on one class; it hides which set feeds which test. A small source owned by exactly one fixture may stay next to it — that permission is about *placement*, not embedding: non-trivial case construction still belongs in a named `*Source` class, not in an inline `IEnumerable<TestCaseData>` method or collection initializer on the fixture itself.
-- Keep sources free of assertion logic — data only. Sources may compose builders.
+- **Prefer a dedicated `*Source` file per data set** — one class, one set. Don't collect many unrelated `[TestCaseSource]` sets as sibling methods on one class; it hides which set feeds which test. A small source owned by exactly one fixture may stay next to it as a top-level class — that permission is about *placement*, not embedding: non-trivial case construction belongs in a named `*Source` class, not in an inline `IEnumerable<TestCaseData>` method or collection initializer on the fixture itself.
+- Keep sources free of assertion logic — data only. Sources may compose builders and book entries.
 
 | Situation | Use |
 |---|---|
-| Object used once, in one test | inline construction |
-| Same object shape needed by ≥2 tests | `*Builder` |
-| Same named object or value (a role, a state, a canonical valid value) needed by ≥2 fixtures | code book entry |
+| Object used once, in one test | inline construction (through the type's builder when one exists) |
+| Same object graph needed by ≥2 tests in one fixture | fixture-local `private static T Name => ...;` member |
+| Same named object or value needed by ≥2 fixtures, or a role/outcome entry of the type | code book entry |
+| Non-trivial construction with sensible defaults, wherever it happens | `*Builder` |
 | Same test body run with multiple data variants | `*Source` + `[TestCaseSource]` |
 
 ## Mocks — FakeItEasy
 
-Create fakes **inside the test** by default. When a fixture has more than one test exercising the same subject, hold it and its dependencies as private fields, build them once in `[SetUp]`, and give each test a small `Arrange` helper that configures the fakes. Never write a static factory that rebuilds the subject inside every test — it is built in one place.
+Create fakes **inside the test** by default. When a fixture has more than one test exercising the same subject, hold it and its dependencies as private fields, build them once in `[SetUp]`, and give each test a small `Arrange` helper that configures the fakes. Build the subject in one place — `[SetUp]`, or a single factory when a test needs a differently wired subject — not in every test.
 
 ```csharp
 private IRepository<User> _userRepository = null!;
@@ -221,8 +250,8 @@ private void Arrange(params User[] users) =>
 - Back an `IQueryable`-returning repository method with `MockQueryable.FakeItEasy`'s `.BuildMock()` — it supports async EF operators (`ToListAsync`, `FirstOrDefaultAsync`), a plain `AsQueryable()` does not. It evaluates in memory: it proves the orchestration around the query, not that the expression translates to SQL or behaves like SQL Server (collation, null semantics, provider functions) — query correctness belongs in the real-database integration tests.
 - Verify interactions with `A.CallTo(() => _service.DoAsync(A<int>._)).MustHaveHappenedOnceExactly()` / `.MustNotHaveHappened()`.
 - Never share mutable fake state across tests; per-test `A.CallTo` configuration stays in the test (or its `Arrange` helper).
-- NUnit runs all of a fixture's tests on **one instance**, sequentially by default — that is what makes `[SetUp]`-assigned fields safe. Don't mark such a fixture `[Parallelizable]` at method scope; if per-test parallelism is ever genuinely needed, switch to `[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]` first.
-- **An unconfigured member returns a Dummy when FakeItEasy can create one — otherwise `default(T)`, which may be `null`.** For typical fakeable reference types that means a non-null dummy (including things like `Expression` or `Type`), so a production `if (x == null)` branch is never reached unless you say so: `A.CallTo(() => _repository.FindById(id)).Returns(null)`. Never rely on either default when the scenario depends on a sentinel result — a test whose scenario *is* "not found" or "not set" must configure the null explicitly. This is the main trap when porting Moq tests, which returned `null` by default — a ported test can keep compiling and silently start exercising a different path.
+- NUnit runs all of a fixture's tests on **one instance**, sequentially by default — that is what makes `[SetUp]`-assigned fields safe. Check the assembly- and fixture-level `[Parallelizable]` settings before relying on it; if per-test parallelism is ever genuinely needed, switch to `[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]` first, and remember that a fresh instance does not isolate static state or shared services.
+- **An unconfigured member returns a Dummy when FakeItEasy can create one — otherwise `default(T)`, which may be `null`.** For typical fakeable reference types that means a non-null dummy (including things like `Expression` or `Type`), so a production `if (x == null)` branch is never reached unless you say so: `A.CallTo(() => _repository.FindById(id)).Returns(null)`. A test whose scenario *is* "not found" or "not set" must configure the null explicitly. This is the main trap when porting Moq or NSubstitute tests, which returned `null` by default — a ported test can keep compiling and silently start exercising a different path.
 
 ### Don't fake `ILogger` — use `NullLogger`
 
@@ -260,11 +289,11 @@ public Task NullArgumentThrows() =>
     Should.ThrowAsync<ArgumentNullException>(() => _handler.Handle(null!, CancellationToken.None));
 ```
 
-**Never call an async throw-assertion from a `void` test** — the Task is discarded, the assertion never runs, and the test can never fail (false green). This applies to both `Should.ThrowAsync<T>(...)` and `act.ShouldThrowAsync<T>()`. Tooling only partly covers this — NUnit.Analyzers flags `async void` tests and the compiler flags unawaited calls inside `async` methods, but a discarded assertion in a synchronous `void` test compiles silently unless the project adds an analyzer for it (the project notes say if it does). The rule holds regardless. Pass a deliberate token explicitly to token-taking methods — usually `CancellationToken.None`, or a created/cancelled token when cancellation propagation is itself the contract. `Assert.Throws`/`Assert.ThrowsAsync`/`Assert.That(..., Throws.X)` are legacy — refactor on touch.
+**Never call an async throw-assertion from a `void` test** — the Task is discarded, NUnit never observes its result, and the test passes whether or not the exception was thrown (false green). This applies to both `Should.ThrowAsync<T>(...)` and `act.ShouldThrowAsync<T>()`. Tooling only partly covers this — NUnit.Analyzers flags `async void` tests and the compiler flags unawaited calls inside `async` methods, but a discarded assertion in a synchronous `void` test compiles silently unless the project adds an analyzer for it (the project notes say if it does). The rule holds regardless. Pass a deliberate token explicitly to token-taking methods — usually `CancellationToken.None`, or a created/cancelled token when cancellation propagation is itself the contract. `Assert.Throws`/`Assert.ThrowsAsync`/`Assert.That(..., Throws.X)` are legacy — refactor on touch.
 
 ## Snapshot testing with Verify.NUnit
 
-Use Verify for integration responses, documents, and any result whose whole shape is the contract. The snapshot also pins fields you didn't explicitly assert, so an added or removed DTO member is caught — exactly what you want when a contract changes.
+Use Verify for integration responses, documents, and any result whose whole shape is the contract. The snapshot also pins fields you didn't explicitly assert, so an added or removed member of the *verified representation* is caught — exactly what you want when a contract changes.
 
 ```csharp
 var response = await Client.GetAsync<GetUserDetails.Response>($"api/users/{_user.Id}");
@@ -272,9 +301,11 @@ var response = await Client.GetAsync<GetUserDetails.Response>($"api/users/{_user
 await Verify(response);
 ```
 
+- **Check the test project first**: that it references `Verify.NUnit`, which version, how it imports the verifier (`ImplicitUsings`/`using static VerifyNUnit.Verifier;`), and where shared settings come from (project notes). Verify is part of the org stack, so adding the reference to a test project that lacks it is in scope for a test-writing task — say so in the change.
 - Verify the whole result (including the `CommandResult`/`Result<T>` wrapper when there is one), not just `.Value`, unless you specifically need the value alone. The snapshot is the **smallest complete contract under test** — the full wrapper when the wrapper is part of the contract, never an entire aggregate, service, or incidental object graph dragged in for convenience. An anonymous projection is appropriate when the test protects a result together with a related state change or call count.
-- **Never let secrets or personal data reach Verify at all** — no credentials, tokens, connection strings, or personal data beyond what the scenario needs. Project them away or configure scrubbers **before calling `Verify`**: the `.received.txt` is written before any approval step, so scrub-on-approve is already too late. Don't rely on a reviewer spotting them in the diff.
-- With default settings a non-parameterized snapshot is `<Fixture>.<Method>.verified.txt` — name the test method meaningfully; parameters and Verify settings extend the name, so trust the `Received:`/`Verified:` paths Verify reports. On first run Verify writes `.received.txt`: review it, then approve it as `.verified.txt` and **commit the `.verified.txt` file** (`*.received.*` stays git-ignored).
+- A snapshot sees only what reaches the verified object and survives serialization and settings. A typed-DTO snapshot protects the deserialized shape; a wire-contract test that must catch an extra or renamed JSON field, a status code or a header snapshots the raw response instead.
+- **Test data is synthetic. No secrets or real personal data reach Verify at all** — no credentials, tokens or connection strings. Project them away or configure scrubbers **before calling `Verify`**: the `.received.txt` is written before any approval step, so scrub-on-approve is already too late.
+- With default settings a non-parameterized snapshot is `<Fixture>.<Method>.verified.txt`; NUnit test parameters extend the name automatically. **Every parameterized case must resolve to a distinct, stable snapshot name** — for opaque objects, colliding `ToString` values or unstable representations, use the installed version's parameter-naming settings (`UseParameters`, `UseTextForParameters`) with a semantic case key. A readable runner name is not proof of a unique snapshot path; trust the `Received:`/`Verified:` paths Verify reports. On first run Verify writes `.received.txt`: review it, then approve it as `.verified.txt` and **commit the `.verified.txt` file** (`*.received.*` stays git-ignored).
 - **Centralize shared Verify settings** (scrubbers, converters, ignored members) using the project's documented mechanism — a `[ModuleInitializer]` initializer or a shared settings factory; the project notes say which. Reuse it instead of duplicating scrubbers per test, and use per-test settings only for genuine exceptions.
 - When a test asserts on fixed GUIDs or dates, keep them **unscrubbed** or the snapshot proves nothing.
 - Do **not** use Verify for simple scalar outcomes — Shouldly there.
@@ -284,59 +315,38 @@ await Verify(response);
 
 Tests must produce the same result on every machine and every run.
 
-- **Time**: production reads the clock through an injected abstraction — in Entry projects `Enigmatry.Entry.Core.ITimeProvider` (`UtcNow` / `FixedUtcNow`), **not** the BCL `System.TimeProvider`, and never `DateTime.Now`/`UtcNow` directly. Some projects add a second seam for the *local* date (a date provider returning "today" in the app's timezone) — the project notes list every clock seam. **Freeze every relevant seam** when an assertion depends on time; faking a clock to return the current time is pointless, and a fake that is created but never registered in the container silences nothing.
+- **Time**: production reads the clock through the project's injected clock seam — in Entry projects `Enigmatry.Entry.Core.ITimeProvider` (`UtcNow` / `FixedUtcNow`); other codebases have their own abstraction — **not** the BCL `System.TimeProvider`, and never `DateTime.Now`/`UtcNow` directly. Some projects add a second seam for the *local* date (a date provider returning "today" in the app's timezone) — the project notes list every clock seam. **Freeze every relevant seam** when an assertion depends on time; faking a clock to return the current time is pointless, and a fake that is created but never registered in the container silences nothing.
 - **No real sleeps or wall-clock waits**: no `Thread.Sleep`, no `Task.Delay`, no polling loops on the wall clock to make a test pass. Control the clock or synchronize on the task/event that represents completion; a bounded wall-clock timeout guarding that deterministic wait against hanging is fine. An eventually-style poll is acceptable only when eventual consistency is itself the behaviour under test and no deterministic completion signal exists.
-- **No uncontrolled randomness** in code under test: no `Guid.NewGuid()`, `Random.Shared`, or unseeded generator where the value affects the outcome. AutoFixture/Bogus are fine for values that genuinely don't matter — but an unseeded random string can accidentally satisfy or violate a rule (e.g. an alphanumeric generator producing an all-digit value), which is how flaky tests are born. Seed the generator or pin the value. When production code genuinely needs randomness, route it through an injectable seam — Entry ships `Enigmatry.Entry.Randomness` (`IGenerateRandomness` + typed `Random*Generator`s) — so a test can fake the value, the same way `ITimeProvider` seams the clock.
+- **No uncontrolled randomness** in code under test: no `Guid.NewGuid()`, `Random.Shared`, or unseeded generator where the value affects the outcome. AutoFixture/Bogus are fine for values that genuinely don't matter — but an unseeded random string can accidentally satisfy or violate a rule (e.g. an alphanumeric generator producing an all-digit value), which is how flaky tests are born. Seed the generator or pin the value. When production code genuinely needs randomness, route it through an injectable seam — Entry ships `Enigmatry.Entry.Randomness` (`IGenerateRandomness` + typed `Random*Generator`s) — so a test can fake the value, the same way the clock seam does.
 - **No dependency on culture defaults** when the app sets a non-invariant default culture — parse and format explicitly, or set the culture in the fixture.
-- **No dependency on ambient state**: network, file system, wall clock, or a shared database, unless explicitly controlled as below.
+- **No dependency on ambient state**: network, file system, wall clock, or a shared database, unless explicitly controlled as in the [integration reference](references/integration-tests.md).
 
 ## Validators (FluentValidation)
 
 - One `<Command>ValidatorFixture` per validator, `[Category("unit")]`, using `FluentValidation.TestHelper`: `await validator.TestValidateAsync(command)` then `ShouldHaveValidationErrorFor(c => c.Field)` / `ShouldNotHaveValidationErrorFor(...)`.
 - **Unit-test validation rules exhaustively here, not through the API.** Add an integration test only when its subject is something the unit test can't see: that the validator is *registered* in the pipeline, its message localization, or the HTTP error contract.
 - Build a fresh command per case that satisfies the *other* rules, so only the rule under test can fail.
-- Sweep boundaries with `[TestCase]` (null / empty / whitespace / max+1 / each enum member), not one `[Test]` per value.
+- Sweep boundaries with `[TestCase]` (null / empty / whitespace / max and max+1 / each enum member), not one `[Test]` per value. Cover the valid side of every boundary, not just the failing one.
+- **Enum rules** cover every defined member as valid and representative undefined values as invalid — out-of-range on both sides and gaps in sparse enums. For `[Flags]` distinguish permitted combinations from unsupported bits according to the rule actually written; FluentValidation's `IsInEnum` accepts any combination of defined bits.
+- **A child validator gets its own fixture.** The parent fixture adds one canary proving the child is wired (`ShouldHaveChildValidator(c => c.Child, typeof(ChildValidator))`, or one representative invalid child producing the nested failure path) and, for a `.When(...)`-gated child, that the condition applies. Don't re-test the child's rules from the parent.
+- **Whole-object rules** (`RuleFor(x => x).Must(...)`) and rules over nested paths are tested by validating the complete input and asserting the relevant failure (and its property path or error code where it matters); a direct-member setup helper doesn't reach them.
+- **Throw-safety is a distinct assertion.** A `Must`/`When` predicate that dereferences a sibling, or a child-validated reference without `NotNull`, can throw on a null or empty input instead of failing validation cleanly. When an edge input is meant to be *invalid*, the failing validation assertion already covers it; when the input is meant to be *valid*, assert the validator survives it.
 - Fake repository lookups used by async rules with `A.Fake<IRepository<T>>()` + `.BuildMock()`. A validator containing any `MustAsync`/`CustomAsync` must be exercised with the async helpers — the sync ones throw.
 - If a project ships a validator-test base class with field/enum/id helpers, use it instead of hand-writing sweeps (see the project notes).
 
-## Use the Entry test building blocks — don't re-copy them
-
-Test infrastructure that used to be copied from the blueprint into every project is now shipped as NuGet packages. **Before writing any test plumbing, check whether Entry already provides it** — a local copy means a bug fixed upstream never reaches this repo.
-
-| Package | Provides |
-|---|---|
-| `Enigmatry.Entry.AspNetCore.Tests.Utilities` | `Database.TestDatabase` (Testcontainers.MsSql with a shared ref-counted container, env-var override, and multi-database support via `ConnectionStringEnvironmentVariables` + `OnAfterContainerInitialized`), `DatabaseInitializerOptions` (`TablesToIgnore`, before/after-delete custom SQL, identity reseeding, container image) and the migrate-or-Respawn initializer behind it; `DatabaseHelpers.DropAllSql` + the `SplitStatements()` string extension; `ServiceScopeExtensions.Resolve<T>()`; `Http.UriExtensions.AppendParameters(...)` |
-| `Enigmatry.Entry.AspNetCore.Tests.SystemTextJson` / `…NewtonsoftJson` | typed HTTP helpers (`Client.GetAsync<T>`, `PostAsync<T>`, `PostAsync<T, TResponse>`, `PutAsync…`), `DeserializeWithStatusCodeCheckAsync`, the `HttpSerializationOptions`/`Settings` seam for custom converters, and Shouldly-backed response assertions — `BeBadRequest()`, `BeNotFound()`, `ContainValidationError(field, message)` |
-
-Those three are `IsPackable` and on the feed. **`Enigmatry.Entry.AspNetCore.Tests` is not** — despite its `PackageId`, it sets `IsTestProject` without `IsPackable`, so it is Entry's own test suite and ships nothing. Its test-authentication scheme (`TestUserAuthenticationHandler` + `TestAuthenticationOptions` + `TestUserData`, driven by a `TestPrincipalFactory`) is therefore a **pattern to copy, not a dependency to add** — a local copy of it in a project is correct, not duplication. Read it in the building-blocks repo when you need to wire up test impersonation.
-
-`ContainValidationError` is the right tool for the narrow integration test that checks the HTTP error contract (see [Validators](#validators-fluentvalidation)) — don't parse `ValidationProblemDetails` by hand.
-
-Two caveats:
-
-- **Available doesn't mean recommended.** The same Utilities package also ships `Database.InMemory.InMemoryDbModule`/`InMemoryDatabase`/`TestRunner` and `TestServer.ApiEnvironment<T>` — an older harness style built on the EF in-memory provider. Prefer `TestDatabase` on real SQL Server with `WebApplicationFactory`; use the in-memory path only in a project that already standardised on it.
-- **Check the version the project actually references** before using an API you found in the building-blocks source — a local checkout of that repo is often ahead of the `EntryVersion` the project consumes.
-
-Project-specific plumbing (a factory base that injects configuration, bearer-token helpers, tenant/user seeding) legitimately stays in the repo. the project notes list what this project keeps locally and which local copies are now redundant.
-
 ## Integration tests
 
-The standard Enigmatry setup: `WebApplicationFactory<Program>` against a real SQL Server from **Testcontainers.MsSql**, reset between tests with **Respawn**. Some projects run the API tests and the database tests in one fixture hierarchy, others split them across `Api.Tests` and `Infrastructure.Tests`, and side processes (worker, scheduler, importer, CLI) sometimes build their own host instead of using `WebApplicationFactory`. **Use the harness, authentication setup, HTTP helpers, seeding helpers and route conventions documented in the project notes — never invent a parallel harness**, and don't assume a helper exists on every fixture base.
+An integration test runs the real API pipeline and DI container through `WebApplicationFactory<Program>` (side processes — worker, scheduler, importer — build their own host). What sits behind the host is the project's **integration profile**, one of:
 
-The database lifecycle behind the standard harness — whether from the Entry package or a local copy of it — is: migrate only when the schema changed (missing DB or pending migrations), otherwise **Respawn-delete the data**. That's what makes per-test isolation cheap, and it has consequences:
+| Profile | Proves | Doesn't prove |
+|---|---|---|
+| **SQL Server** — Testcontainers.MsSql + Respawn (default for a new project with a database) | routing, DI, middleware, authorization, serialization, error translation, **and** SQL translation, constraints, transactions, migrations, persistence wiring | — |
+| **In-process host, no database** — dependencies replaced by fakes/stubs | the same application-pipeline behaviour; the only choice for an application without a database | anything about a database |
+| **In-process host with EF in-memory** — where a project chose it | application-level orchestration over an EF-backed substitute | SQL translation, relational constraints, transactions, raw SQL |
 
-- **Lookup/seed tables must be listed in the reset configuration's ignore list.** Add every new enum/lookup table there or its seeded rows get wiped and unrelated tests start failing. Only immutable reference data belongs on that list — ignored tables are never reset, so a test that mutates one leaks state into every later test.
-- A local SQL Server can replace the container through connection-string environment variables (`IntegrationTestsConnectionString` by convention, often supplied via `.runsettings`). Projects needing more than one database require **all** of them to be set before local mode kicks in.
-- **Test projects that share a database must not run concurrently.** Running them together races on Respawn and migrations and produces phantom failures (deadlocks, `'X' is not a constraint`, HTTP 500s). Run one project at a time when the project notes say they share state; `TestCategory=unit` is normally safe solution-wide.
+The project notes say which profile(s) the project uses; a suite may use more than one for different contracts. **Preserve the project's profile during ordinary test work, and never add an alternate database provider to prove SQL Server behaviour** — a test that must prove a query, constraint or migration runs against the production provider, or the notes record where that coverage lives (or that it is a known gap).
 
-Writing the tests:
-
-- Seed data in `[SetUp]` with builders plus the harness's add-and-save helper.
-- Call the API through the typed helpers from `Enigmatry.Entry.AspNetCore.Tests.*Json.Http` — `Client.GetAsync<T>(url)`, `Client.PostAsync<TRequest, TResponse>(url, command)` — not hand-rolled serialization. Check the route prefix your API actually uses.
-- Assert the response with `await Verify(response)`; assert persisted state through the harness's query helper.
-- **Integration tests earn their cost on routing, authorization, middleware, persistence, mapping and the external error contract** — happy flows plus the failure flows whose value is in that plumbing. Keep exhaustive business-rule, validation and edge-case matrices in unit tests.
-- **Don't add a dedicated test for a simple, logic-free property** (a value just carried command → entity → DTO). Extend an existing create/update round-trip: set it in the command, assert it on the response. Reserve new tests for actual logic.
-- Replace out-of-process dependencies (mail, blob storage, message bus, external HTTP) with the fakes already registered in the test container — check what the project replaces before adding your own.
+Everything else — host and client lifetime and disposal, replacing registrations, the Entry test packages, the SQL Server lifecycle (migrate-or-Respawn, ignore lists, local connection strings, shared-database concurrency), typed HTTP helpers and Verify on responses — is in [`references/integration-tests.md`](references/integration-tests.md). Read it when the task touches an integration fixture or harness; skip it for unit-only work.
 
 ## Running tests
 
@@ -347,26 +357,21 @@ dotnet test --filter "TestCategory=unit"
 dotnet test --filter "FullyQualifiedName~MyFixture.MyTest"
 ```
 
-Integration tests additionally need Docker (or the local connection-string environment variables) plus any per-project settings/secrets listed in the project notes. Note that a `TestCategory` filter silently skips fixtures that carry no category and any non-NUnit project — the project notes list those if the repo has them.
+`TestCategory=unit` is normally safe solution-wide. A category filter silently skips fixtures that carry no category, and adapters other than NUnit's map the filter differently — the project notes list such projects if the repo has them. Integration prerequisites (Docker or connection strings, secrets, which projects must not run concurrently) are in the integration reference and the project notes.
 
 ## What NOT to do
 
-- Don't use underscores in test method names, don't repeat the fixture's subject in them, and don't add `[TestFixture]` to a `*Fixture` class.
-- Don't name the subject `_sut`/`sut`.
-- Don't write `// Arrange`, `// Act`, `// Assert` comments.
-- Don't use `Assert.*` / `Assert.That`, FluentAssertions, NSubstitute or Moq — Shouldly and FakeItEasy only.
-- Don't write separate `[Test]` methods for cases that differ only in input values. **Check for this before writing any new `[Test]`.**
-- Don't branch on the scenario inside a test body.
-- Don't bundle unrelated assertions with `ShouldSatisfyAllConditions`.
+The highest-risk mistakes; each rule above carries its own exceptions.
+
+- Don't introduce a legacy library — FluentAssertions, NSubstitute, Moq, classic or constraint-model `Assert` for state — and don't leave a fixture you touched still using one.
+- Don't write a test that can't fail: no tautologies, no asserting only what the test itself assigned, no substring or `Any(...)` match where the exact value is the contract.
 - Don't call an async throw-assertion without awaiting or returning it.
-- Don't write a test that can't fail — no tautologies, no asserting a value the test itself arranged; observe a new test failing for the intended reason before you're done.
-- Don't leave a fixture importing two mocking or two assertion libraries.
+- Don't write separate `[Test]` methods for cases that differ only in input values. **Check for this before writing any new `[Test]`.**
+- Don't branch on the scenario inside a test body, and don't bundle unrelated assertions with `ShouldSatisfyAllConditions`.
+- Don't keep a mutable test object graph in a `static readonly` or fixture-lifetime field, and don't re-declare a named test object or value that a code book (or a second fixture) already has.
 - Don't fake `ILogger`/`ILogger<T>` just to satisfy a constructor — pass `NullLogger<T>.Instance`.
 - Don't test validation rules through an integration test, or add a unit test that only asserts a property assignment.
-- Don't hand-roll test plumbing the Entry test packages already provide — typed HTTP helpers, response assertions, the Testcontainers/Respawn database lifecycle.
-- Don't use the EF in-memory provider as a stand-in for SQL Server (a narrow, provider-independent exception documented in the project notes is the only pass), and don't let tests depend on the real clock, real network, or leftover database state.
-- Don't `Thread.Sleep`/`Task.Delay`/poll the wall clock to make a test pass — control the clock or synchronize on completion.
-- Don't keep a mutable test object graph in a `static readonly` or fixture-lifetime field — build it fresh per use.
-- Don't re-declare the same named test object or value — a private `Build*` helper, a magic BSN — in a second fixture; promote it to a code book entry.
-- Don't bulk-approve `.received.txt` snapshots.
-- Don't ship a fixture without a `[Category]`, or a time-dependent test whose clock seams aren't all frozen.
+- Don't let tests depend on the real clock, real network, `Thread.Sleep`/`Task.Delay`, or leftover database state, and don't add an alternate database provider to prove SQL Server behaviour.
+- Don't change a project's integration profile, harness, layout, or test-project structure as a side effect of writing a test.
+- Don't bulk-approve `.received.txt` snapshots, and don't let secrets or real personal data reach a snapshot.
+- Don't use underscores in test method names, don't repeat the fixture's subject in them, don't name the subject `_sut`, and don't write `// Arrange` / `// Act` / `// Assert` comments.

@@ -40,5 +40,4 @@ Use C# 13 features wherever applicable.
 ## Testing
 
 - Always include test cases for critical paths.
-- Do not emit `// Arrange`, `// Act`, or `// Assert` comments.
-- Match the naming style and capitalization of nearby test files.
+- Test structure, naming, assertions and mocking follow the `csharp-unit-tests` skill and the host repo's `.claude/project-notes/csharp-unit-tests.md`.

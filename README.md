@@ -20,7 +20,8 @@ vertical-slice projects built on the
 |---|---|
 | `entry-blueprint:aspnet-rest-apis` | .NET Web API features: MediatR, Autofac, FluentValidation, vertical slices |
 | `entry-blueprint:csharp-coding-standards` | Any C# file: naming, formatting, nullability |
-| `entry-blueprint:csharp-unit-tests` | C# tests: NUnit 4, Shouldly, FakeItEasy, Verify, builders and code books, Testcontainers integration tests |
+| `entry-blueprint:csharp-unit-tests` | C# tests: NUnit 4, Shouldly, FakeItEasy, Verify, builders and code books; integration-test profiles in its references |
+| `entry-blueprint:generating-e2e-tests` | Playwright e2e specs: page objects, API teardown, shared-environment safety |
 | `entry-blueprint:frontend-foundations` | Every front-end task: comments, naming, code shape, failure handling, security |
 | `entry-blueprint:typescript` | Any TypeScript file: naming, type system, async/await, module boundaries |
 | `entry-blueprint:angular` | Angular components, services, directives, templates: signals, standalone, `inject()` |

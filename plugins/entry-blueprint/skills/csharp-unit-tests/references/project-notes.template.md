@@ -21,7 +21,9 @@ Which `Enigmatry.Entry.*.Tests.*` packages are referenced and at which `EntryVer
 
 ## Test databases
 
-Only for the SQL Server and EF in-memory profiles. How the database is provisioned (Testcontainers / local connection string / both) and how the mode is selected. Where the Respawn configuration lives and which tables must be ignored. Whether test projects share a database — if so, run them one project at a time. Secrets or environment variables individual fixtures need. For a database-free or EF in-memory profile: where SQL Server query and constraint coverage lives, or that it is a known gap.
+- **SQL Server profile**: how the database is provisioned (Testcontainers / local connection string / both) and how the mode is selected. Where the Respawn configuration lives and which tables must be ignored. Whether test projects share a database — if so, run them one project at a time. Secrets or environment variables individual fixtures need.
+- **EF in-memory profile**: how the store is named and isolated per test or fixture, who owns and resets it.
+- **Coverage boundary** (any profile other than SQL Server, for an application that has a database): where SQL Server query and constraint coverage lives, or that it is a known gap. An application without a database records "not applicable".
 
 ## Test data, builders and code books
 

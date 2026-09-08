@@ -85,8 +85,8 @@ known legacy) from **`.claude/project-notes/csharp-unit-tests.md`** at the host
 repository root. The skill creates it from its bundled
 [project-notes template](plugins/entry-blueprint/skills/csharp-unit-tests/references/project-notes.template.md)
 the first time it writes tests in a repo that has none (never during a review),
-filling in only what it can verify. Project rules that differ from the standard
-go in that file, never in a copy of the skill. The skill body carries the common
+filling in only what it can verify. A project's choices on the skill's
+project-selectable points go in that file, never in a copy of the skill. The skill body carries the common
 and unit-test rules; integration-test profiles and harness guidance live in its
 `references/integration-tests.md`, loaded only when a task touches them.
 

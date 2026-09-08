@@ -1,6 +1,6 @@
 ---
 name: code-review-blueprint
-description: Enigmatry Entry Blueprint code review checklist covering .NET 9 and Angular/TypeScript. Use this when reviewing or performing a code review on blueprint changes.
+description: Enigmatry Entry Blueprint code review checklist covering .NET 10 and Angular/TypeScript. Use this when reviewing or performing a code review on blueprint changes.
 ---
 
 # Blueprint Code Review
@@ -20,7 +20,7 @@ description: Enigmatry Entry Blueprint code review checklist covering .NET 9 and
 - **No tests** for a new handler, validator, or domain rule
 - **Service registered** via `IServiceCollection` instead of an Autofac module in `Infrastructure/Autofac/Modules/`
 - **`.subscribe()`** used in Angular where `firstValueFrom()` would suffice (one-shot observable)
-- **FluentValidation validator** exists but not wired to DI, or missing entirely for a command/query that has user inputs
+- **FluentValidation validator** missing for a command/query that has user inputs (validators in Domain, ApplicationServices and Api are auto-registered; DI wiring is never the fix)
 - **Static `Log.*`** used in business code instead of injected `ILogger<T>`
 - **Domain entity** exposes public setters instead of using the `Create`/`Update` factory methods
 - **Non-standalone** Angular component created without justification

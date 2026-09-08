@@ -1,8 +1,27 @@
 {
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "statusMessage": "Formatting C# whitespace...",
+            "timeout": 30,
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/format-on-edit.sh\""
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "statusMessage": "Running dotnet format and build gate...",
+            "timeout": 600,
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/dotnet-format-gate.sh\""
+          },
           {
             "type": "command",
             "statusMessage": "Checking entry-blueprint code-review gate...",

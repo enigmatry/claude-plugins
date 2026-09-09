@@ -87,7 +87,7 @@ public static class GetProductDetails
 }
 ```
 
-**List query.** `PagedRequest` + `IPagedRequestHandler`; filters come from the domain's `QueryBy*` extensions, never inline `Where`:
+**List query.** `PagedRequest` + `IPagedRequestHandler`; reusable filters live in the domain's `QueryBy*` extensions. A one-off predicate that a single handler needs (for example the `x.Id != request.Id` exclusion in a uniqueness query) is fine inline:
 
 ```csharp
 public static class GetProducts
@@ -497,7 +497,7 @@ Auto-registered, no module entry needed: classes named `*Service` (`ServiceModul
 6. `npm run nswag` with the API running, to regenerate the TypeScript client.
 7. Snapshots: any `.verified.txt` that serializes the entity now differs. Grep the test projects for the entity name; in the template `Scheduler.Tests/CleanOldProductsJobFixture.*.verified.txt` serializes whole `Product` rows.
 8. Tests: a `{Feature}ControllerFixture` in `Api.Tests/Features/` plus a `{Entity}Builder` in `Domain.Tests/{Feature}/`. The template ships these for Users only; for another feature copy `UsersControllerFixture` and `UserBuilder`. New Verify snapshots need one test run to produce the `.received.txt` you accept as `.verified.txt`; do not hand-write them. See `entry-blueprint:csharp-unit-tests`.
-9. Frontend side of a filter (see `entry-blueprint:angular`): the `TextSearchFilter` in `features/{feature}/models/get-{feature}-query.model.ts`, the `client.search(...)` call in the list component, and translation keys in `src/i18n/messages.*.json` for the ids codegen emits (`{feature}.{feature}-edit.{field}.label`, `.placeholder`, `{feature}.{feature}-list.{field}`). The NSwag client passes query properties **positionally in `Request` property order**, so append new filter properties at the end of `Request` to keep existing calls valid.
+9. Frontend side of a filter (see `entry-blueprint:angular`): the `TextSearchFilter` in `features/{feature}/models/get-{feature}-query.model.ts`, the `client.search(...)` call in the list component, and translation keys in `src/i18n/messages.*.json` for the ids codegen emits: plural feature, singular component (`products.product-edit.code.label`, `.placeholder`, `products.product-list.code`). In the template the Users query model file is misspelled `qet-users-query.model.ts`; grep for `TextSearchFilter` rather than relying on the name. NSwag passes query properties **positionally, the request's own properties first and the inherited paging/sorting properties (`pageNumber`, `pageSize`, `sortBy`, `sortDirection`) last**, so any new filter changes the `search(...)` signature: update every call site.
 
 ## What NOT to do
 

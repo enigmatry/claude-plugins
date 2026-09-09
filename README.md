@@ -52,11 +52,11 @@ standard and the tooling applies it deterministically.
   on that file in folder mode (no project load, fast). If the file changed,
   Claude is told to re-read it before the next edit.
 - **Stop**, `dotnet format` gate: when uncommitted `.cs` files exist, runs
-  `dotnet format --severity info` on them (whitespace, style, and analyzer fixes,
-  including `suggestion`-level `.editorconfig` rules) and then `dotnet build`.
-  Blocks the stop when formatting or the build fails, with the errors in the
-  reason. The blueprint builds with `TreatWarningsAsErrors`, so a style rule at
-  `warning` that has no code fix also blocks here.
+  `dotnet restore`, then `dotnet format --severity info` on them (whitespace,
+  style, and analyzer fixes, including `suggestion`-level `.editorconfig` rules)
+  and then `dotnet build`. Blocks the stop when any step fails, with the errors
+  in the reason. The blueprint builds with `TreatWarningsAsErrors`, so a style
+  rule at `warning` that has no code fix also blocks here.
 - **Stop**, code-review gate: blocks Claude from finishing while uncommitted
   `.cs`/`.ts`/`.html` files exist that haven't been through
   `entry-blueprint:code-review-blueprint`.

@@ -25,28 +25,38 @@ ws=$(ls -1 ./*.slnx 2>/dev/null | head -n 1)
 [ -z "$ws" ] && exit 0
 
 # Changed .cs files as one argument each in "$@", as paths relative to $root:
-# `dotnet format --include` only matches paths relative to the workspace
-# folder (absolute paths are silently ignored). --relative and ls-files both
-# report relative to the cwd and skip files above it, which is right: those are
-# not in the solution. -z gives unquoted paths; renames show only the new name;
-# deletions are dropped by the -f test. Paths containing a newline are not
-# supported.
+# in solution/workspace mode `dotnet format --include` only matches paths
+# relative to the workspace folder and silently ignores absolute ones (folder
+# mode, `--folder`, accepts both). --relative and ls-files both report relative
+# to the cwd and skip files above it, which is right: those are not in the
+# solution. -z gives unquoted paths; renames show only the new name; deletions
+# are dropped by the -f test. Before the first commit HEAD does not exist, so
+# the staged files come from the index instead. Paths containing a newline are
+# not supported.
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
 set --
 while IFS= read -r p; do
   case "$p" in *.cs) ;; *) continue ;; esac
   [ -f "$p" ] && set -- "$@" "$p"
 done <<LIST
-$({ git diff --name-only -z --relative HEAD; git ls-files -o --exclude-standard -z; } 2>/dev/null | tr '\0' '\n')
+$({
+  if git rev-parse -q --verify HEAD >/dev/null 2>&1; then
+    git diff --name-only -z --relative HEAD
+  else
+    git diff --cached --name-only -z --relative
+  fi
+  git ls-files -o --exclude-standard -z
+} 2>/dev/null | tr '\0' '\n')
 LIST
 [ $# -eq 0 ] && exit 0
 
 block() {
   # $1 = headline, $2 = tool output. Runs in the parent shell so `exit` ends
   # the script: exactly one JSON object is ever printed. Make the text
-  # JSON-safe without escaping: join lines, drop CR and other control
-  # characters, quotes -> apostrophes, backslashes -> slashes, cap size.
-  detail=$(printf '%s' "$2" | head -c 6000 | tr '\n' ' ' | tr -d '\001-\037\177' | tr '"' "'" | tr '\\' '/' | sed 's/  */ /g')
+  # JSON-safe without escaping: cap size (in bytes, so drop a multi-byte
+  # character the cap cut in half), join lines, drop CR and other control
+  # characters, quotes -> apostrophes, backslashes -> slashes.
+  detail=$(printf '%s' "$2" | head -c 6000 | iconv -c -f UTF-8 -t UTF-8 2>/dev/null | tr '\n' ' ' | tr -d '\001-\037\177' | tr '"' "'" | tr '\\' '/' | sed 's/  */ /g')
   printf '{"decision":"block","reason":"%s %s"}' "$1" "$detail"
   exit 0
 }

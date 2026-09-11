@@ -10,7 +10,7 @@ Claude Code plugin marketplace by [Enigmatry](https://github.com/enigmatry).
 
 ### entry-blueprint
 
-Skills, workflows, MCP servers and a code-review Stop hook for .NET 10 + Angular
+Skills, workflows, MCP servers, format/build and code-review hooks for .NET 10 + Angular
 vertical-slice projects built on the
 [Enigmatry Entry Blueprint](https://github.com/enigmatry) starter template.
 
@@ -19,7 +19,6 @@ vertical-slice projects built on the
 | Skill | Use for |
 |---|---|
 | `entry-blueprint:aspnet-rest-apis` | .NET Web API features: MediatR, Autofac, FluentValidation, vertical slices |
-| `entry-blueprint:csharp-coding-standards` | Any C# file: naming, formatting, nullability |
 | `entry-blueprint:csharp-unit-tests` | C# tests: NUnit 4, Shouldly, FakeItEasy, Verify, builders and code books; integration-test profiles in its references |
 | `entry-blueprint:generating-e2e-tests` | Playwright e2e specs: page objects, API teardown, shared-environment safety |
 | `entry-blueprint:frontend-foundations` | Every front-end task: comments, naming, code shape, failure handling, security |
@@ -44,16 +43,32 @@ runner** (a repo on Jest/Jasmine/Karma gets migrated, not extended;
 Repo-specific facts belong in the host project's `CLAUDE.md` or a thin
 per-project skill, not in these shared skills.
 
-#### Stop hook
+#### Hooks
 
-A `Stop` hook blocks Claude from finishing while uncommitted `.cs`/`.ts`/`.html`
-files exist that haven't been through `entry-blueprint:code-review-blueprint`.
-It blocks at most once per batch of changes (loop-guarded via `stop_hook_active`).
+C# style is not described in a skill: the host project's `.editorconfig` is the
+standard and the tooling applies it deterministically.
 
-> **Windows note:** the hook runs as a POSIX `sh` script and requires Git Bash
-> (installed with Git for Windows). Without it the hook falls back to PowerShell
-> and the gate fails open — everything else keeps working, the review gate is
-> just not enforced.
+- **PostToolUse** (`Edit`/`Write` of a `.cs` file): runs `dotnet format whitespace`
+  on that file in folder mode (no project load, fast). If the file changed,
+  Claude is told to re-read it before the next edit.
+- **Stop**, `dotnet format` gate: when uncommitted `.cs` files exist, runs
+  `dotnet restore`, then `dotnet format --severity info` on them (whitespace,
+  style, and analyzer fixes, including `suggestion`-level `.editorconfig` rules)
+  and then `dotnet build`. Blocks the stop when any step fails, with the errors
+  in the reason. The blueprint builds with `TreatWarningsAsErrors`, so a style
+  rule at `warning` that has no code fix also blocks here.
+- **Stop**, code-review gate: blocks Claude from finishing while uncommitted
+  `.cs`/`.ts`/`.html` files exist that haven't been through
+  `entry-blueprint:code-review-blueprint`.
+
+Both Stop gates block at most once per batch of changes (loop-guarded via
+`stop_hook_active`). The format hooks are no-ops without the .NET SDK on `PATH`
+or without an `.editorconfig` / solution at the project root.
+
+> **Windows note:** the hooks run as POSIX `sh` scripts and require Git Bash
+> (installed with Git for Windows). Without it the hooks fall back to PowerShell
+> and the gates fail open — everything else keeps working, they are just not
+> enforced.
 
 #### MCP servers
 

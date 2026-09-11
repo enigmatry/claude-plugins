@@ -4,7 +4,7 @@ Companion to the `csharp-unit-tests` skill; read it when a task touches an integ
 
 ## Host ownership and lifetime
 
-Every project settles, and records in its notes, the lifetime of the `WebApplicationFactory` and of the `HttpClient` separately — each **shared across a fixture** or **created per test** — and **who disposes each**, paired with the teardown that does it.
+For API-hosted suites, every project settles, and records in its notes, the lifetime of the `WebApplicationFactory` and of the `HttpClient` separately — each **shared across a fixture** or **created per test** — and **who disposes each**, paired with the teardown that does it. A self-hosted side process or a direct-database fixture answers the same ownership question for what it builds instead — the host, the connection, the scope — and records who disposes it.
 
 - Shared factory (the common shape with a database): the fixture base owns it, creates it in `[OneTimeSetUp]` and disposes it in `[OneTimeTearDown]`; the client is usually per test (`[SetUp]`/`[TearDown]`). Tests never dispose what the base owns.
 - Per-test factory (common in database-free hosts): the fixture creates factory and client in `[SetUp]` and disposes both in `[TearDown]` (or implements `IDisposable` and lets NUnit dispose the fixture instance per test with `[FixtureLifeCycle(LifeCycle.InstancePerTestCase)]`). An undisposed factory keeps its sockets and hosted services alive into later tests; static state is a separate isolation concern that disposal does not reset.

@@ -19,7 +19,7 @@ vertical-slice projects built on the
 | Skill | Use for |
 |---|---|
 | `entry-blueprint:aspnet-rest-apis` | .NET Web API features: MediatR, Autofac, FluentValidation, vertical slices |
-| `entry-blueprint:csharp-unit-tests` | C# tests: NUnit, FluentAssertions, NSubstitute, Verify |
+| `entry-blueprint:csharp-unit-tests` | C# tests: NUnit 4, Shouldly, FakeItEasy, Verify, builders and code books; integration-test profiles in its references |
 | `entry-blueprint:generating-e2e-tests` | Playwright e2e specs: page objects, API teardown, shared-environment safety |
 | `entry-blueprint:frontend-foundations` | Every front-end task: comments, naming, code shape, failure handling, security |
 | `entry-blueprint:typescript` | Any TypeScript file: naming, type system, async/await, module boundaries |
@@ -93,6 +93,17 @@ project's `CLAUDE.md`. Add one like this:
 - Azure DevOps project: `Your Project Name`
 - Default branch: `master`
 ```
+
+`entry-blueprint:csharp-unit-tests` reads repo-specific testing facts (fixture
+base classes, builder and code-book locations, clock seams, integration profile,
+known legacy) from **`.claude/project-notes/csharp-unit-tests.md`** at the host
+repository root. The skill creates it from its bundled
+[project-notes template](plugins/entry-blueprint/skills/csharp-unit-tests/references/project-notes.template.md)
+the first time it writes tests in a repo that has none (never during a review),
+filling in only what it can verify. A project's choices on the skill's
+project-selectable points go in that file, never in a copy of the skill. The skill body carries the common
+and unit-test rules; integration-test profiles and harness guidance live in its
+`references/integration-tests.md`, loaded only when a task touches them.
 
 ## Installation
 

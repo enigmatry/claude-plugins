@@ -2,10 +2,6 @@
 
 Claude Code plugin marketplace by [Enigmatry](https://github.com/enigmatry).
 
-> **Private repository** — this marketplace is private to the Enigmatry GitHub
-> organization. Installing requires access to `enigmatry/claude-plugins` and
-> working git credentials (see [Private repo access](#private-repo-access)).
-
 ## Plugins
 
 ### entry-blueprint
@@ -111,40 +107,42 @@ and unit-test rules; integration-test profiles and harness guidance live in its
 /plugin install entry-blueprint@enigmatry
 ```
 
-### Private repo access
+The repository is public, so no git credentials are needed to add the
+marketplace or to receive updates.
 
-Claude Code clones this marketplace with your local git credentials. Make sure
-they work non-interactively:
+### Team setup
 
-```sh
-gh auth login          # once, if not already authenticated
-gh auth setup-git      # configures git's credential helper to use gh
-```
-
-SSH keys or another git credential helper work too. Note that `GH_TOKEN`/
-`GITHUB_TOKEN` environment variables alone are **not** picked up by background
-marketplace updates — a configured credential helper is required.
-
-Optional hardening: set `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` so a
-failed background update (e.g. after credential rotation) keeps the existing
-local marketplace clone instead of discarding it.
-
-### Team auto-install
-
-Add to your project's `.claude/settings.json` so the plugin installs for every
-teammate who trusts the repo:
+Add to your project's `.claude/settings.json`. Once a teammate trusts the repo,
+Claude Code registers the marketplace, enables auto-update for it, and reports
+the plugin as not installed together with the install command to run — an
+externally sourced plugin is never downloaded without that explicit step:
 
 ```json
 {
   "extraKnownMarketplaces": {
     "enigmatry": {
-      "source": { "source": "github", "repo": "enigmatry/claude-plugins" }
+      "source": { "source": "github", "repo": "enigmatry/claude-plugins" },
+      "autoUpdate": true
     }
   },
   "enabledPlugins": {
     "entry-blueprint@enigmatry": true
   }
 }
+```
+
+```sh
+claude plugin install entry-blueprint@enigmatry --scope project
+```
+
+### Updates
+
+With `autoUpdate` set as above, Claude Code refreshes the marketplace and the
+installed plugin in the background after startup whenever the plugin's `version`
+is bumped, then asks you to run `/reload-plugins`. To update on demand:
+
+```sh
+claude plugin update entry-blueprint@enigmatry
 ```
 
 ## License

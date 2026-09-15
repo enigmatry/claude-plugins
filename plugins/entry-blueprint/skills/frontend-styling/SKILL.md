@@ -9,11 +9,10 @@ description: How HTML markup and SCSS are built at Enigmatry — SMACSS naming, 
 > stylesheets are built; `a11y` owns **what they must achieve**. Where they meet,
 > `a11y` is the stricter authority.
 
-Distilled from the **Sass Coding Standard** on the internal wiki —
-<https://wiki.enigmatry.com/en/standards-and-guidelines/sass-coding-standard>
-(sub-pages: SMACSS, General Conventions, File/Folder Hierarchy, Stylelint,
-Accessibility). The wiki is the source of truth; when it and this file disagree,
-the wiki wins.
+Distilled from Enigmatry's internal **Sass Coding Standard** (sections: SMACSS,
+General Conventions, File/Folder Hierarchy, Stylelint, Accessibility). For
+Enigmatry developers that standard is the source of truth; when it and this
+file disagree, the standard wins.
 
 ## Reuse before you write
 

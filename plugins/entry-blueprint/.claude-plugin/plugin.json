@@ -1,7 +1,7 @@
 {
   "name": "entry-blueprint",
   "displayName": "Enigmatry Entry Blueprint",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Skills, workflows, MCP servers, format/build and code-review hooks for .NET 10 + Angular vertical-slice projects built on the Enigmatry Entry Blueprint",
   "author": { "name": "Enigmatry", "url": "https://github.com/enigmatry" },
   "repository": "https://github.com/enigmatry/claude-plugins",

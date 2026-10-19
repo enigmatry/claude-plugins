@@ -23,8 +23,9 @@ case "$(field hook_event_name)" in
     [ "$(field skill)" = "entry-blueprint:csharp-unit-tests" ] && touch "$marker"
     exit 0 ;;
   UserPromptExpansion)
-    case "$(field command_name)" in
-      csharp-unit-tests|entry-blueprint:csharp-unit-tests) touch "$marker" ;;
+    # The bare name only counts for a plugin skill; a project or personal skill can share it.
+    case "$(field command_source):$(field command_name)" in
+      plugin:csharp-unit-tests|*:entry-blueprint:csharp-unit-tests) touch "$marker" ;;
     esac
     exit 0 ;;
 esac

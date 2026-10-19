@@ -2,7 +2,18 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write|MultiEdit|Skill",
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 15,
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/require-test-skill.sh\""
+          }
+        ]
+      }
+    ],
+    "UserPromptExpansion": [
+      {
         "hooks": [
           {
             "type": "command",
@@ -13,6 +24,16 @@
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "timeout": 15,
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/require-test-skill.sh\""
+          }
+        ]
+      },
       {
         "matcher": "Edit|Write|MultiEdit",
         "hooks": [

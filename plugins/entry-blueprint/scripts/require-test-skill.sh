@@ -1,26 +1,33 @@
 #!/bin/sh
-# PreToolUse hook (Edit|Write|MultiEdit|Skill): before the first write to a C# test
-# file in a session, require entry-blueprint:csharp-unit-tests to be loaded.
-# Exit 2 + stderr blocks the call and tells Claude why. Loading the skill through
-# the Skill tool sets the per-session marker, so the edit is only blocked when the
-# skill was not loaded yet; otherwise it fires once per session, then stays quiet.
+# Gate C# test edits on the entry-blueprint:csharp-unit-tests skill being loaded.
+# - PostToolUse (Skill) and UserPromptExpansion (/csharp-unit-tests): record that
+#   the skill loaded, in a marker per session and per subagent (a subagent does
+#   not inherit the skill its parent loaded).
+# - PreToolUse (Edit|Write|MultiEdit) of a *Fixture.cs / *Tests.cs file: block
+#   (exit 2 + stderr) until that marker exists.
 raw=$(cat)
 
 field() {
   printf '%s' "$raw" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -n 1
 }
 
-# Fall back to an hourly bucket so the hook stays active if the payload ever lacks a session id.
+# Fall back to an hourly bucket so the gate stays active if the payload ever lacks a session id.
 key=$(field session_id)
 [ -z "$key" ] && key=$(date +%Y%m%d-%H)
+agent=$(field agent_id)
+[ -n "$agent" ] && key="$key-$agent"
 marker="${TMPDIR:-/tmp}/claude-csharp-unit-tests-$key.marker"
 
-if [ "$(field tool_name)" = "Skill" ]; then
-  case "$(field skill)" in
-    *csharp-unit-tests) touch "$marker" ;;
-  esac
-  exit 0
-fi
+case "$(field hook_event_name)" in
+  PostToolUse)
+    [ "$(field skill)" = "entry-blueprint:csharp-unit-tests" ] && touch "$marker"
+    exit 0 ;;
+  UserPromptExpansion)
+    case "$(field command_name)" in
+      csharp-unit-tests|entry-blueprint:csharp-unit-tests) touch "$marker" ;;
+    esac
+    exit 0 ;;
+esac
 
 file=$(field file_path | sed 's#\\#/#g; s#//*#/#g')
 case "$file" in
@@ -29,7 +36,6 @@ case "$file" in
   *) exit 0 ;;
 esac
 [ -f "$marker" ] && exit 0
-touch "$marker"
 
-echo "You are about to write a C# test (${file##*/}). Load the entry-blueprint:csharp-unit-tests skill first (Skill tool) and follow it, including the project notes it points to: the rules on test naming, fixture accessibility, assertion count, parameterization and existing builders are not in CLAUDE.md. Then retry the edit; this check fires once per session." >&2
+echo "You are about to write a C# test (${file##*/}). Load the entry-blueprint:csharp-unit-tests skill first (Skill tool, skill: entry-blueprint:csharp-unit-tests) and follow it, including the project notes it points to: the rules on test naming, fixture accessibility, assertion count, parameterization and existing builders are not in CLAUDE.md. Test-file edits stay blocked until the skill is loaded; then retry the edit." >&2
 exit 2

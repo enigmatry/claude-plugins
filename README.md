@@ -44,6 +44,14 @@ per-project skill, not in these shared skills.
 C# style is not described in a skill: the host project's `.editorconfig` is the
 standard and the tooling applies it deterministically.
 
+- **PreToolUse** (`Edit`/`Write` of a `*Fixture.cs` or `*Tests.cs` file): blocks
+  test-file edits until `entry-blueprint:csharp-unit-tests` is loaded, so the
+  test conventions apply even when Claude doesn't pick the skill up by itself. A
+  load counts once the `Skill` tool call succeeds (PostToolUse) or the user runs
+  `/csharp-unit-tests` (UserPromptExpansion). Tracked per session, and per
+  subagent, since a subagent doesn't inherit the skills its parent loaded. A
+  custom agent that writes C# tests needs the `Skill` tool, also when it
+  preloads the skill through `skills:`.
 - **PostToolUse** (`Edit`/`Write` of a `.cs` file): runs `dotnet format whitespace`
   on that file in folder mode (no project load, fast). If the file changed,
   Claude is told to re-read it before the next edit.

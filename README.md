@@ -28,6 +28,7 @@ vertical-slice projects built on the
 | `entry-blueprint:code-review-blueprint` | Reviewing changes before declaring work done |
 | `entry-blueprint:jira-branch` | Creating a git branch from a Jira ticket (assigns + transitions the ticket) |
 | `entry-blueprint:pull-request` | Creating an Azure DevOps PR with Squash merge, completed manually after review |
+| `entry-blueprint:baseline-security-audit` | A Baseline Security audit of the project (19 checks, OWASP Top 10:2025 and ASVS 5.0), optionally creating Jira stories; only when the request names Baseline Security |
 
 The front-end skills are layered so a rule lives in exactly one file:
 `frontend-foundations` is the base every other one points at; `typescript` is
@@ -96,6 +97,12 @@ project's `CLAUDE.md`. Add one like this:
 - Azure DevOps project: `Your Project Name`
 - Default branch: `master`
 ```
+
+`entry-blueprint:baseline-security-audit` needs an Atlassian (Jira) MCP server to create
+stories and a SonarQube MCP server for its Code Quality check; neither ships with
+this plugin. Without them the audit still runs and reports those parts as not
+verifiable. It also reads the shared Bicep files from the CICD Azure Infra
+repository in Azure DevOps and asks once for the project folder.
 
 `entry-blueprint:csharp-unit-tests` reads repo-specific testing facts (fixture
 base classes, builder and code-book locations, clock seams, integration profile,

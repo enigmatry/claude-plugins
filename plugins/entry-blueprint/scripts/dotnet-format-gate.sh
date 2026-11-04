@@ -6,6 +6,7 @@
 # Loop-safe like code-review-gate.sh: lets the continuation stop through
 # (stop_hook_active = true), so it blocks at most once per batch of changes.
 raw=$(cat)
+. "${0%/*}/hook-disabled.sh"
 
 printf '%s' "$raw" | grep -Eq '"stop_hook_active"[[:space:]]*:[[:space:]]*true' && exit 0
 command -v dotnet >/dev/null 2>&1 || exit 0

@@ -75,6 +75,31 @@ or without an `.editorconfig` / solution at the project root.
 > and the gates fail open — everything else keeps working, they are just not
 > enforced.
 
+##### Switching hooks off
+
+Every hook is on by default. A project that does not want one lists it in
+`ENIGMATRY_DISABLED_HOOKS` in the `env` block of its `.claude/settings.json`,
+named after its script without `.sh`, separated by spaces or commas:
+
+```json
+{
+  "env": {
+    "ENIGMATRY_DISABLED_HOOKS": "dotnet-format-gate, code-review-gate"
+  }
+}
+```
+
+| Name | Hook |
+|---|---|
+| `require-test-skill` | PreToolUse gate on C# test edits |
+| `format-on-edit` | PostToolUse `dotnet format whitespace` |
+| `dotnet-format-gate` | Stop `dotnet format` and build gate |
+| `code-review-gate` | Stop code-review gate |
+
+Like any `env` entry in a shared settings file, it takes effect once a teammate
+trusts the folder. A developer can set their own list in
+`.claude/settings.local.json`, which takes precedence over the shared one.
+
 #### MCP servers
 
 The plugin ships two MCP servers used by the workflow skills:

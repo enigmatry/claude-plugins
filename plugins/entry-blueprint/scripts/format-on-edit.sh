@@ -7,6 +7,7 @@
 # If the formatter changed the file, tell Claude to re-read it before the next
 # edit, otherwise the next Edit will be refused as "modified since read".
 raw=$(cat)
+. "${0%/*}/hook-disabled.sh"
 
 command -v dotnet >/dev/null 2>&1 || exit 0
 

@@ -6,6 +6,7 @@
 # - PreToolUse (Edit|Write|MultiEdit) of a *Fixture.cs / *Tests.cs file: block
 #   (exit 2 + stderr) until that marker exists.
 raw=$(cat)
+. "${0%/*}/hook-disabled.sh"
 
 field() {
   printf '%s' "$raw" | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -n 1

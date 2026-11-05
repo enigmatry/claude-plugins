@@ -13,7 +13,7 @@ If the repo has no notes yet: while **writing** tests, create the file from `${C
 
 - The task and the host repo's own instructions (`CLAUDE.md`, project notes) decide *which* tests to write. Loading this skill never means adding tests at a level the task doesn't call for — most tasks need unit tests only; the [integration reference](references/integration-tests.md) is read only when the task touches an integration fixture or harness.
 - **Org standard, not negotiable per project:** NUnit 4, Shouldly, FakeItEasy, Verify.NUnit, and every convention in this file that isn't marked as project-selectable. Libraries in the legacy list below are converted on touch.
-- **Project-selectable, recorded in the project notes:** the integration profile (real SQL Server, in-process host without a database, or EF in-memory — see [Integration tests](#integration-tests)), the code-book shape and naming, fixture-helper placement, test-project layout, the clock seam's concrete type, the integration-test scope (see [Coverage expectations](#coverage-expectations)), and whether *arrange* may iterate. Where the notes are silent, infer the established choice from package references, configuration and the maintained fixtures before applying the default named here.
+- **Project-selectable, recorded in the project notes:** the integration profile (real SQL Server, in-process host without a database, or EF in-memory — see [Integration tests](#integration-tests)), the code-book shape and naming, fixture-helper placement, test-project layout, the clock seam's concrete type, the integration-test scope (see [Coverage expectations](#coverage-expectations)), and whether a test body may loop at all. Where the notes are silent, infer the established choice from package references, configuration and the maintained fixtures before applying the default named here.
 - **Fixture-local conversion is part of test work; migrations are separate tasks.** Converting the legacy assertion and mocking calls in the fixture you touch is expected (see the legacy list). Changing the test runner, the harness, the layout or the integration profile is never a side effect of writing a test.
 
 ## Stack
@@ -117,7 +117,7 @@ result.ShouldBe(expectedVisible ? targetUser : null);
 result.ShouldBe(data.Expected);
 ```
 
-Straightforward iteration in *arrange* (seeding several entities, building a list) or a cohesive collection assertion is fine — the rule targets control flow that changes the scenario or the expectation, not every loop. A project may forbid loops in arrange as well (project notes).
+Straightforward iteration in *arrange* (seeding several entities, building a list) or a cohesive collection assertion is fine — the rule targets control flow that changes the scenario or the expectation, not every loop. A project may forbid loops anywhere in a test body, in arrange and in assertions alike (project notes).
 
 ## Parameterized tests — [TestCase] and [TestCaseSource]
 

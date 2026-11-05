@@ -48,6 +48,11 @@ Every clock seam (`ITimeProvider`, a local-date provider, …), its concrete typ
 
 Validator-fixture base class and helpers, if the project ships them (field/enum/id sweeps, child-validator canaries), and their file location.
 
+## Coverage scope and loops
+
+- Integration-test scope: representative happy paths plus the error contracts a client reacts to (the skill's default), or happy paths only — and if so, which unit fixtures prove each error contract (validator, filter, guard) and whether a fitness test guards the wiring.
+- Loops in test bodies: allowed for straightforward iteration in arrange and for a cohesive collection assertion (the skill's default), or forbidden anywhere in a test body.
+
 ## Known legacy and dormant tests
 
 Conventions the suite still violates in places (underscored names, `*Tests` suffix, branching bodies, inline `TestCaseData`, legacy assertion or mocking libraries, missing categories, ignored or `[Explicit]` fixtures). Convert on touch, don't mass-refactor.

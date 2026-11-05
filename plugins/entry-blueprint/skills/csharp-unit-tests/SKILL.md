@@ -13,7 +13,7 @@ If the repo has no notes yet: while **writing** tests, create the file from `${C
 
 - The task and the host repo's own instructions (`CLAUDE.md`, project notes) decide *which* tests to write. Loading this skill never means adding tests at a level the task doesn't call for — most tasks need unit tests only; the [integration reference](references/integration-tests.md) is read only when the task touches an integration fixture or harness.
 - **Org standard, not negotiable per project:** NUnit 4, Shouldly, FakeItEasy, Verify.NUnit, and every convention in this file that isn't marked as project-selectable. Libraries in the legacy list below are converted on touch.
-- **Project-selectable, recorded in the project notes:** the integration profile (real SQL Server, in-process host without a database, or EF in-memory — see [Integration tests](#integration-tests)), the code-book shape and naming, fixture-helper placement, test-project layout, the clock seam's concrete type. Where the notes are silent, infer the established choice from package references, configuration and the maintained fixtures before applying the default named here.
+- **Project-selectable, recorded in the project notes:** the integration profile (real SQL Server, in-process host without a database, or EF in-memory — see [Integration tests](#integration-tests)), the code-book shape and naming, fixture-helper placement, test-project layout, the clock seam's concrete type, the integration-test scope (see [Coverage expectations](#coverage-expectations)), and whether a test body may loop at all. Where the notes are silent, infer the established choice from package references, configuration and the maintained fixtures before applying the default named here.
 - **Fixture-local conversion is part of test work; migrations are separate tasks.** Converting the legacy assertion and mocking calls in the fixture you touch is expected (see the legacy list). Changing the test runner, the harness, the layout or the integration profile is never a side effect of writing a test.
 
 ## Stack
@@ -42,7 +42,7 @@ NUnit is also the standard runner. A project still on MSTest or xUnit (`[Fact]`,
 ## Coverage expectations
 
 - **Unit tests** aim at every meaningful branch of new or materially changed business logic — handlers, validators, domain rules, mappings — including the boundary, invalid, empty and null inputs each rule actually distinguishes, and both sides of every boundary. Trivial pass-through behaviour (a value carried command → entity → DTO) and generated code get no dedicated test unless they carry a specific risk.
-- **Integration tests** cover representative happy paths plus the failures whose value is in the plumbing — routing, authorization, validator registration, serialization, persistence, error translation — and every distinct error contract a client reacts to (a `4xx` the frontend handles specifically, an error surfacing from a deep layer). Exhaustive business-rule and input matrices stay in unit tests. "It's covered by an existing integration test" is only true if that test would fail when the new behaviour breaks.
+- **Integration tests** cover representative happy paths plus the failures whose value is in the plumbing — routing, authorization, validator registration, serialization, persistence, error translation — and every distinct error contract a client reacts to (a `4xx` the frontend handles specifically, an error surfacing from a deep layer). Exhaustive business-rule and input matrices stay in unit tests. This scope is the default; a project may instead keep integration tests to happy paths and prove each error contract in a unit test of the component that produces it (project notes). "It's covered by an existing integration test" is only true if that test would fail when the new behaviour breaks.
 
 **Every test must be able to fail when the behaviour it protects breaks.** Assert an independently observed outcome or interaction against an explicit expectation — never a tautology, and never only that the setup produced the value you assigned. For a bug fix, watch the test fail against the original defect before fixing. For a test added to existing correct behaviour, be able to say which regression it detects; a focused temporary mutation of the production code is a good way to check when in doubt. Flipping the expected value, or Verify failing only because no `.verified.txt` exists yet, proves nothing.
 
@@ -57,7 +57,7 @@ NUnit is also the standard runner. A project still on MSTest or xUnit (`[Fact]`,
 - **Every fixture carries `[Category("unit")]` or `[Category("integration")]`** so CI can filter (`dotnet test --filter "TestCategory=unit"`). Adopt on touch in suites that don't have it yet.
 - New unit fixtures are `internal sealed`; NUnit discovers `internal` fixtures, `public` is a convention where a suite uses it. Match the surrounding project rather than mass-changing.
 - **Name the subject after its type, never `_sut`/`sut`**: `private EmployeeService _employeeService;`. Same for dependencies — `_contractRepository`, not `_repo2`.
-- Declare the subject and its dependencies as private `_camelCase` fields when the fixture shares them across tests — never PascalCase `{ get; set; }` auto-properties. Add `= null!` to `[SetUp]`-assigned fields **only when the test project has `Nullable` enabled**.
+- Declare the subject and its dependencies as private `_camelCase` fields when the fixture shares them across tests — never PascalCase `{ get; set; }` auto-properties. Don't add `= null!` to a field assigned in `[SetUp]` or `[OneTimeSetUp]`: NUnit.Analyzers suppresses CS8618 for it, also with `Nullable` enabled.
 - A helper type a fixture needs (a `Testable*` subclass, a stub, a builder) lives where the project notes say; the default is its own `internal sealed` file in the same mirrored folder.
 
 ## Naming — descriptive PascalCase, no underscores, no repeated context
@@ -117,7 +117,7 @@ result.ShouldBe(expectedVisible ? targetUser : null);
 result.ShouldBe(data.Expected);
 ```
 
-Straightforward iteration in *arrange* (seeding several entities, building a list) or a cohesive collection assertion is fine — the rule targets control flow that changes the scenario or the expectation, not every loop.
+Straightforward iteration in *arrange* (seeding several entities, building a list) or a cohesive collection assertion is fine — the rule targets control flow that changes the scenario or the expectation, not every loop. A project may forbid loops anywhere in a test body, in arrange and in assertions alike (project notes).
 
 ## Parameterized tests — [TestCase] and [TestCaseSource]
 
@@ -232,9 +232,9 @@ Promotion follows the reuse: construct inline while one test needs it → lift t
 Create fakes **inside the test** by default. When a fixture has more than one test exercising the same subject, hold it and its dependencies as private fields, build them once in `[SetUp]`, and give each test a small `Arrange` helper that configures the fakes. Build the subject in one place — `[SetUp]`, or a single factory when a test needs a differently wired subject — not in every test.
 
 ```csharp
-private IRepository<User> _userRepository = null!;
-private ICurrentUserProvider _currentUserProvider = null!;
-private UserService _userService = null!;
+private IRepository<User> _userRepository;
+private ICurrentUserProvider _currentUserProvider;
+private UserService _userService;
 
 [SetUp]
 public void SetUp()

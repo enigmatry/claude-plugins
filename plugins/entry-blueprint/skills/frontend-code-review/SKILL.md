@@ -67,10 +67,11 @@ Check each step against the loaded skill, not from memory.
 3. **Security** — secrets, PII in logs, unvalidated input, unsanitized HTML.
 4. **Failure handling** — empty catch, `void` on a promise, log-and-continue, a
    duplicate notification for an error already handled globally.
-5. **Suppressions** — `any`, `!` and `@ts-*` are banned outright
-   (`frontend-foundations`, `typescript`): any new one is a finding, reason or
-   not. A new `as` must be one of the casts `typescript` allows — anything else
-   is a finding. A new lint disable needs a named rule and a stated reason.
+5. **Suppressions** — `any`, `!`, `@ts-ignore` and `@ts-nocheck` are banned
+   outright (`frontend-foundations`, `typescript`): any new one is a finding,
+   reason or not. A new `as` must be one of the casts `typescript` allows —
+   anything else is a finding. A new lint disable needs a named rule and a stated
+   reason; a new `@ts-expect-error` needs a stated reason.
 6. **Framework conventions** — `angular`'s bans and requirements: structural
    directives, `@for` track stability, DI style, decorators, `async` hooks,
    `OnPush`, selector prefix.

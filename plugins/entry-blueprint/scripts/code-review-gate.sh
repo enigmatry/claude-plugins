@@ -4,7 +4,7 @@
 # Loop-safe: allows immediately when the stop is itself a continuation of this hook
 # (stop_hook_active = true), so it blocks at most once per batch of changes.
 raw=$(cat)
-. "${0%/*}/hook-disabled.sh"
+. "$(dirname "$0")/hook-disabled.sh"
 
 # Already continuing because of this hook -> let it through (prevents infinite loop).
 printf '%s' "$raw" | grep -Eq '"stop_hook_active"[[:space:]]*:[[:space:]]*true' && exit 0

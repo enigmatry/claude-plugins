@@ -6,7 +6,6 @@
   },
   "Context7": {
     "type": "http",
-    "url": "https://mcp.context7.com/mcp/oauth",
-    "tools": ["query-docs", "resolve-library-id"]
+    "url": "https://mcp.context7.com/mcp/oauth"
   }
 }

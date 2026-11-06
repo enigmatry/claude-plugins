@@ -102,10 +102,9 @@ trusts the folder. A developer can set their own list in
 
 #### MCP servers
 
-The plugin ships two MCP servers used by the workflow skills:
+The plugin ships these MCP servers used by the workflow skills:
 
 - `azure-devops` — [@azure-devops/mcp](https://www.npmjs.com/package/@azure-devops/mcp) for the `enigmatry` organization
-- `Context7` — documentation lookup. It signs in through OAuth: run `/mcp` once, pick `plugin:entry-blueprint:Context7` and authenticate with a Context7 account (the free plan is enough for public libraries)
 
 #### Project configuration for the workflow skills
 

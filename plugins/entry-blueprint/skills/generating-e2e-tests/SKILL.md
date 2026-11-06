@@ -127,7 +127,7 @@ From the e2e project directory:
 
 - Project lint script → 0 errors (run the auto-fix variant first if there is one).
 - The new spec on one browser: `npx playwright test tests/<file> --project=chromium` → green. Check the project docs for prerequisites (app running locally? credentials in the process environment?). If credentials are injected by a runner or IDE and a raw terminal run fails on missing env vars, that's **expected, not a bug** — never "fix" it by editing config or hardcoding credentials; ask the user to run it.
-- Check the passing spec against current Playwright guidance via Context7 (`resolve-library-id` → `query-docs`) and fix what it flags.
+- If a Context7 MCP server is available, check the passing spec against current Playwright guidance through it (`resolve-library-id` → `query-docs`) and fix what it flags.
 - Update any inventory tables the project maintains (covered scenarios, page objects, helpers, test data).
 
 ## References

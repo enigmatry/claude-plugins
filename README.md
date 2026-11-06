@@ -75,16 +75,25 @@ or without an `.editorconfig` / solution at the project root.
 > and the gates fail open — everything else keeps working, they are just not
 > enforced.
 
-##### Switching hooks off
+##### Choosing which hooks run
 
-Every hook is on by default. A project that does not want one lists it in
-`ENIGMATRY_DISABLED_HOOKS` in the `env` block of its `.claude/settings.json`,
-named after its script without `.sh`, separated by spaces or commas:
+`ENIGMATRY_ENABLED_HOOKS` in the `env` block of a project's `.claude/settings.json`
+decides which hooks run there:
+
+| Value | Hooks that run |
+|---|---|
+| not set, or `all` | every hook, including hooks added in later plugin versions |
+| `none` | none |
+| a list, e.g. `format-on-edit, code-review-gate` | only the named hooks; a hook added in a later plugin version stays off until the project adds it |
+
+A hook is named after its script without `.sh`; separate names with spaces or
+commas. A list therefore lets a project keep auto-update on without a new hook
+switching itself on:
 
 ```json
 {
   "env": {
-    "ENIGMATRY_DISABLED_HOOKS": "dotnet-format-gate, code-review-gate"
+    "ENIGMATRY_ENABLED_HOOKS": "format-on-edit"
   }
 }
 ```
@@ -97,8 +106,11 @@ named after its script without `.sh`, separated by spaces or commas:
 | `code-review-gate` | Stop code-review gate |
 
 Like any `env` entry in a shared settings file, it takes effect once a teammate
-trusts the folder. A developer can set their own list in
+trusts the folder. A developer can set their own value in
 `.claude/settings.local.json`, which takes precedence over the shared one.
+
+A new hook script must source `hook-enabled.sh` right after reading its input,
+as the existing ones do, or this switch cannot turn it off.
 
 #### MCP servers
 

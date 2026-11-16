@@ -25,6 +25,10 @@ is genuinely still on that pattern.
   the only exception; treat any new case as worth questioning.
 - **`inject()` goes in a field initializer** (or the constructor). The
   constructor holds nothing else except `effect()` registrations.
+- **A constant holding an `InjectionToken` is UPPER_SNAKE_CASE**
+  (`API_BASE_URL`), however it is created — the named exception to
+  `typescript`'s camelCase constants, because it sits in `providers` beside
+  Angular's own (`LOCALE_ID`, `MAT_DIALOG_DATA`).
 - Keep components thin — business logic belongs in injected services.
 - **Do not introduce lifecycle hooks in new code.** A signal-based alternative
   exists for every common case (table below).

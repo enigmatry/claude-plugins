@@ -23,7 +23,8 @@ native features; never add polyfills. Pure ES modules only — never emit
 
 - **PascalCase** for classes, interfaces, enums and type aliases;
   **camelCase** for everything else — **including module-level constants**
-  (`defaultPageSize`, not `DEFAULT_PAGE_SIZE`).
+  (`defaultPageSize`, not `DEFAULT_PAGE_SIZE`). A framework skill may name an
+  exception with its reason — `angular`'s injection tokens.
 - **No `I` prefix on interfaces.** Rely on descriptive names.
 - **No leading underscore on member names.** Two exceptions, both forced:
   a private backing field for a same-named accessor that carries logic, and an

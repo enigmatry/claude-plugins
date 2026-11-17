@@ -77,6 +77,14 @@ per file. The TypeScript delta:
   `NonNullable`.
 - Mark class fields `readonly` when never reassigned after construction —
   injected dependencies, subjects, constants.
+- **Check an object, array or function for presence by truthiness** —
+  `if (order)`, never `order !== null && order !== undefined` — and read
+  through it with `order?.lines`. Its type has no falsy value that means
+  anything, so the long form is noise.
+- **Compare explicitly only when a falsy value is valid** (`0`, `''`,
+  `false`): `!price` would treat a price of `0` as missing. Compare only
+  against the nullish members the type has — `!== undefined`, or `!== null`
+  for `| null`.
 
 ## Class method style
 

@@ -1,6 +1,6 @@
 ---
 name: frontend-code-review
-description: Review harness for a front-end change — which skill to load for which file type, severity tiers, a scan order, the comment format, and an explicit list of what not to flag. Use this when reviewing an Angular, TypeScript or SCSS pull request or diff. It provides the process only; the rules being checked live in frontend-foundations, typescript, angular, frontend-styling, angular-testing, generating-e2e-tests and a11y.
+description: Review harness for front-end code — which skill to load for which file type, severity tiers, a scan order, the comment format, and an explicit list of what not to flag. Use this whenever asked to review or code-review Angular, TypeScript, HTML or SCSS code, whether a pull request, a diff, a branch or files named in the request. It provides the process only; the rules being checked live in frontend-foundations, typescript, angular, frontend-styling, angular-testing, generating-e2e-tests and a11y.
 ---
 
 # Front-End Code Review

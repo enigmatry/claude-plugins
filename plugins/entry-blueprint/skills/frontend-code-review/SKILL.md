@@ -8,8 +8,10 @@ description: Review harness for a front-end change — which skill to load for w
 You are an expert front-end engineer reviewing a change. **Flag only what
 matters**: bugs, security problems, broken conventions, wrong architecture.
 
-This file is the *harness*. The rules you check against live elsewhere — load
-the ones the diff touches rather than working from memory.
+This file is the *harness*. The rules you check against live elsewhere.
+**Before reading the diff, load (Skill tool) every skill in this table that the
+files under review touch** — this file carries only the process, so a review
+without them checks nothing but what you remember.
 
 | Diff touches | Load |
 |---|---|

@@ -93,7 +93,7 @@ Everything else the contract produces goes to the attachment only:
 - **Bug** — Background/context, Notes, What we know / don't, Solution or Technical pointers, Out of scope, and any optional section that applies.
 - **Bug, Actual** — "short" governs the prose, not the evidence. The functional statement is a sentence or two, and the verbatim evidence (stack trace, log excerpt, generated SQL) stays in the body beneath it. A reader triaging a bug recognises it from the trace faster than from any description, so the evidence belongs where they will see it.
 
-Write the markdown file first, then cut the body down from it. Never write the body first and pad it out afterwards. Cutting keeps the two consistent; padding invents facts that were never analysed.
+Write the markdown file first, then cut the body down from it. Never write the body first and pad it out afterwards. Cutting keeps the two consistent; padding invents facts that were never analysed. Save the body as a markdown file of its own too: the independent review (see *Verify*) reads both files.
 
 Name the draft for its subject while you write it — `migration-run-summary.md` — then rename it to the issue key once the issue exists. If no attachment tool is available, say so and hand the file to the user to attach, telling them what to rename it to.
 
@@ -417,6 +417,36 @@ Create a sub-task by hand only for genuine one-off work outside that triad (e.g.
 - [ ] Labels/Components per the project; Priority set; Parent only an Epic the user named, otherwise empty.
 - [ ] Referenced keys are Stories/Bugs, not sub-tasks.
 - [ ] No `Implementation` / `Code review` / `Test` sub-tasks created.
+- [ ] Independent review run, and every finding fixed or rejected with a reason (see *Independent review*).
+
+### Independent review
+
+Run this after the checklists above pass, and before you call the Jira tool that creates the issue or rewrites its description. You wrote the draft, so you are the worst reader to spot what it assumes. A reviewer in a fresh context sees only what you hand it. That is how the issue's reader will see it too.
+
+**Dispatch three reviewers in parallel, one per check.** Each is a fresh subagent, never a fork of yourself: a fork inherits your reasoning and confirms it. Reviewers read; none of them edits a file.
+
+| Reviewer | What it checks | What it reads |
+|---|---|---|
+| **Contract** | The contract is applied consistently. The sections match this issue type. Every required section is present. Each optional section is there only when its condition holds. No heading is invented. The body is exactly the body subset for the template, and every statement in the body also appears in the draft. Markdown, not wiki markup. The Formatting, Writing style and Content rules hold. | This `SKILL.md`, the draft file, the body file |
+| **Claims** | No unchecked assumption or claim. Every factual statement traces to a source: the code, a Jira issue or comment, `git log`, an attachment, or the requester's own words. A statement without a source is a finding. Three places are exempt: Open questions, a cause labelled as a hypothesis in Technical pointers, and a figure labelled as reported. | The draft file, the body file, the sources |
+| **Errors** | No plain errors. Issue keys, identifiers, UI labels and error messages match the source character for character. Arithmetic and dates work out. Worked-example rows do not contradict each other. No acceptance criterion contradicts Intended behaviour, Expected or a worked-example row. Every fact the body states matches the draft; what the body leaves out is the body subset at work, not an error. The Markdown renders. | The draft file, the body file, the sources |
+
+**Each reviewer prompt has four parts, in this order:**
+
+1. Its one check, copied from its row in the table above.
+2. The issue type, and the paths of the draft file and the body file.
+3. What to check against. For the contract reviewer: the path to this `SKILL.md`. For the claims and errors reviewers: every source you used — Jira keys, file paths, commits, attachments — and the requester's statements quoted verbatim from the chat, because the reviewer cannot see the chat.
+4. The return format: a list of findings, each with its location (section and quoted text), what is wrong, and the evidence (a source location, or "no source found"). Or the single line `No findings`.
+
+Hand over sources, not conclusions. Never tell a reviewer what you believe is true or which parts you are unsure of. A reviewer handed your hypothesis returns it confirmed.
+
+**Triage every finding against the source yourself.** A finding is a pointer, not a verdict; reviewers can be wrong. Either fix the draft and cut the body again from it, or reject the finding with a one-line reason. An unsourced claim has three outcomes. You find the source, and the claim stays. You cannot find one, and the claim goes. Or the answer is the requester's call, and it moves to Open questions with its options.
+
+**Re-run a reviewer after a substantive fix.** When a fix changed a fact, a section or an acceptance criterion, run the reviewer for that check again on the new files. Stop when every reviewer returns `No findings` or only findings you rejected. If a second round still turns up new findings, stop and show them to the user before creating anything.
+
+**Report the review in the chat, never in the issue.** In a line or two, tell the user what the reviewers found and what you changed. List each rejected finding with its reason. Like the duplicate scan, the review is process: it never becomes a section, a note or a comment.
+
+**When no subagent tool is available,** run the three checks yourself, one at a time, re-reading the files cold for each. Say in the chat that the review was not independent.
 
 ## Common mistakes
 

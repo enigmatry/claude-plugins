@@ -19,26 +19,13 @@ silently.
 
 ## Comments
 
-Code is self-explanatory through **names, types, and small functions**. A comment
-is not that mechanism.
+**Load `code-comments`** — it owns when a comment may be written, in `.ts`,
+`.html` and `.scss` as much as in `tsconfig` and the ESLint and Stylelint
+configs. The front-end delta:
 
-- **Comment only when critical** — a fact that cannot be recovered from the code:
-  a non-obvious *why*, a security rationale, a subtle ordering constraint, a link
-  to the ticket tracking a workaround.
-- **One short line.** Not a paragraph, not a header block.
-- **Never narrate what the code does.** No line-by-line commentary, no comment
-  restating a name, no structural labels.
-- **Prefer intent that executes.** A precise name, a type, or a test that fails
-  when the invariant breaks outlives prose. If a comment exists to explain why a
-  check is written a certain way, write that test and drop the comment.
-- **A comment that is no longer true is a defect** — correct or delete it in the
-  same change that outdates it.
-- **No new commented-out code.** Delete it; git remembers. A bare `//TODO` with
-  no ticket is not an exception.
-- **No doc-comment mandate.** Do not add JSDoc merely because a member is public;
-  write one when a caller cannot use the API correctly without it. **A published
-  package whose reference docs are generated from JSDoc is the exception** —
-  there, every exported symbol needs one.
+- **A published package whose reference docs are generated from JSDoc** needs
+  JSDoc on every exported symbol — the exception to `code-comments`' no
+  doc-comment mandate.
 
 ## Naming
 

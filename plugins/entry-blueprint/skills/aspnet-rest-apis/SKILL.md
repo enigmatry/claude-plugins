@@ -9,6 +9,8 @@ The `Users` and `Products` slices in the template are the reference implementati
 
 There is **no AutoMapper**. Projections are hand-written `Select` extensions on `IQueryable<T>`.
 
+Comments follow `code-comments`, in `.cs` files and in `.csproj`, `.props` and `.targets` alike.
+
 ## Feature folder structure
 
 ```

@@ -26,6 +26,7 @@ vertical-slice projects built on the
 | `entry-blueprint:frontend-code-review` | Reviewing front-end code (a PR, diff, branch or named files): skill per file type, severity tiers, what not to flag |
 | `entry-blueprint:azure-devops-pipelines` | Azure DevOps pipeline YAML |
 | `entry-blueprint:code-review-blueprint` | Reviewing changes before declaring work done |
+| `entry-blueprint:writing-jira-issues` | Writing or refining a Jira Story or Bug as functional analyst: section contract, acceptance criteria, field conventions, attached full draft |
 | `entry-blueprint:jira-branch` | Creating a git branch from a Jira ticket (assigns + transitions the ticket) |
 | `entry-blueprint:pull-request` | Creating an Azure DevOps PR with Squash merge, completed manually after review |
 | `entry-blueprint:baseline-security-audit` | A Baseline Security audit of the project (19 checks, OWASP Top 10:2025 and ASVS 5.0), optionally creating Jira stories; only when the request names Baseline Security |

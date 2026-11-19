@@ -83,3 +83,8 @@ Grouped by the same three stages as the Verify list in `SKILL.md`. Add a new row
 | Hand-edited a translation file from an issue | Draft it, mark it *(to review)*, let a native speaker confirm. |
 | Referenced a sub-task key | Always the parent Story/Bug. |
 | Created `Implementation` / `Code review` / `Test` sub-tasks | Jira automation creates them; you get duplicates. |
+| Created the issue straight after your own checklist pass | Three fresh reviewers first: contract, claims, errors. You cannot see what your own draft assumes. |
+| Forked yourself as a reviewer, or told a reviewer what you believe | A fresh subagent, handed sources, not conclusions. A reviewer handed your hypothesis confirms it. |
+| Applied every reviewer finding as given | Check each one against the source. Fix it, or reject it with a reason. |
+| Kept a claim the claims reviewer could not source | Find the source, delete the claim, or move it to Open questions with its options. |
+| Wrote the review outcome into the issue | It is process. Report it in the chat. |

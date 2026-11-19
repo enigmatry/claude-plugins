@@ -24,8 +24,8 @@ silently.
 configs. The front-end delta:
 
 - **A published package whose reference docs are generated from JSDoc** needs
-  JSDoc on every exported symbol — the exception to `code-comments`' no
-  doc-comment mandate.
+  JSDoc on every exported symbol — the exception to `code-comments` →
+  *Documentation comments*.
 
 ## Naming
 

@@ -1,6 +1,6 @@
 ---
 name: writing-jira-issues
-description: Functional analysis and Jira issue authoring — the section contract, formatting and field conventions for stories and bugs. Use this when acting as business/functional analyst: turning a request, test finding, incident or performance investigation into a Story or Bug, writing acceptance criteria, refining or splitting an existing issue, or when asked to "create a ticket", "write a story", "log a bug" or "prepare refinement".
+description: 'Functional analysis and Jira issue authoring — the section contract, formatting and field conventions for stories and bugs. Use this when acting as business/functional analyst: turning a request, test finding, incident or performance investigation into a Story or Bug, writing acceptance criteria, refining or splitting an existing issue, or when asked to "create a ticket", "write a story", "log a bug" or "prepare refinement".'
 ---
 
 # Writing Jira issues

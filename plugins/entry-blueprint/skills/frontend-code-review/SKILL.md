@@ -15,7 +15,7 @@ without them checks nothing but what you remember.
 
 | Diff touches | Load |
 |---|---|
-| anything | `frontend-foundations` |
+| anything | `frontend-foundations`, `code-comments` |
 | `.ts` | `typescript` |
 | components, services, directives, pipes, interceptors, guards, resolvers, templates | `angular` |
 | `.html`, `.scss` | `frontend-styling` |
@@ -86,7 +86,8 @@ Check each step against the loaded skill, not from memory.
    are they deterministic? Judge an e2e spec by `generating-e2e-tests`, not
    `angular-testing` — its run-unique randomized keys, suite layout and timeout
    literals are required there, not findings.
-10. **Leftovers** — commented-out code, `TODO` with no ticket, debug logging,
+10. **Leftovers** — a comment `code-comments` does not allow (config files
+    included), commented-out code, `TODO` with no ticket, debug logging,
     unused imports, hand-edits to generated files.
 
 ## Review principles

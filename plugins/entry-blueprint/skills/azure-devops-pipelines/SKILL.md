@@ -32,3 +32,4 @@ Keep the entry pipeline a thin orchestrator. As it grows, split it into local te
 - Never hardcode secrets or connection strings in YAML — use variable groups or Azure Key Vault references.
 - Keep nodeVersion aligned with the Node version the repo documents (engines, .nvmrc, or CLAUDE.md).
 - Keep `batch: true` on triggers to avoid redundant builds for rapid pushes.
+- Comments follow `code-comments`: a step's `displayName` says what it does, and the reason a pipeline is built this way goes in the README or the PR description, not in comment blocks.

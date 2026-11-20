@@ -24,13 +24,13 @@ description: Enigmatry Entry Blueprint code review checklist covering .NET 10 an
 - **Static `Log.*`** used in business code instead of injected `ILogger<T>`
 - **Domain entity** exposes public setters instead of using the `Create`/`Update` factory methods
 - **Non-standalone** Angular component created without justification
+- **Comment** that `entry-blueprint:code-comments` does not allow, in any file including `.csproj` and pipeline YAML — narration, an explanatory block, a note about the change. Delete it; an explanation that matters moves to the README or the PR description
 
 ## 🟢 Suggestions
 
 - **Separate `[Test]` methods** that differ only in literal values → collapse with `[TestCase]` / `[TestCaseSource]`
 - **Separate `it()` blocks** that differ only in data → collapse with `it.each`
 - **`nameof()`** not used where a string references a member name
-- **Comment** explains *what* the code does rather than *why* — remove or rewrite
 - **Explicit default argument** passed to a helper that already defaults to that value
 - **Missing `[PublicAPI]`** on a DTO / request / response type, or missing `[UsedImplicitly]` on a handler or validator
 

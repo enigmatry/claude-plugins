@@ -24,7 +24,7 @@ vertical-slice projects built on the
 | `entry-blueprint:angular-testing` | Spec files on Vitest, incl. migrating a repo off Jest/Jasmine/Karma |
 | `entry-blueprint:frontend-styling` | `.html`/`.scss`: semantics, SMACSS naming, SCSS modules, tokens, breakpoints |
 | `entry-blueprint:a11y` | UI components and templates: WCAG 2.2 Level AA |
-| `entry-blueprint:frontend-code-review` | Reviewing a front-end diff: skill per file type, severity tiers, what not to flag |
+| `entry-blueprint:frontend-code-review` | Reviewing front-end code (a PR, diff, branch or named files): skill per file type, severity tiers, what not to flag |
 | `entry-blueprint:azure-devops-pipelines` | Azure DevOps pipeline YAML |
 | `entry-blueprint:code-review-blueprint` | Reviewing changes before declaring work done |
 | `entry-blueprint:writing-jira-issues` | Writing or refining a Jira Story or Bug as functional analyst: section contract, acceptance criteria, field conventions, attached full draft |

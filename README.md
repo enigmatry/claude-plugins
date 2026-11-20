@@ -17,7 +17,8 @@ vertical-slice projects built on the
 | `entry-blueprint:aspnet-rest-apis` | .NET Web API features: MediatR, Autofac, FluentValidation, vertical slices |
 | `entry-blueprint:csharp-unit-tests` | C# tests: NUnit 4, Shouldly, FakeItEasy, Verify, builders and code books; integration-test profiles in its references |
 | `entry-blueprint:generating-e2e-tests` | Playwright e2e specs: page objects, API teardown, shared-environment safety |
-| `entry-blueprint:frontend-foundations` | Every front-end task: comments, naming, code shape, failure handling, security |
+| `entry-blueprint:code-comments` | Any file that can hold a comment, build, config and pipeline files included: when a comment is allowed, and where explanation goes instead |
+| `entry-blueprint:frontend-foundations` | Every front-end task: naming, code shape, failure handling, security |
 | `entry-blueprint:typescript` | Any TypeScript file: naming, type system, async/await, module boundaries |
 | `entry-blueprint:angular` | Angular components, services, directives, templates: signals, standalone, `inject()` |
 | `entry-blueprint:angular-testing` | Spec files on Vitest, incl. migrating a repo off Jest/Jasmine/Karma |
@@ -34,7 +35,9 @@ vertical-slice projects built on the
 The front-end skills are layered so a rule lives in exactly one file:
 `frontend-foundations` is the base every other one points at; `typescript` is
 deliberately framework-free; `angular` carries the framework delta and
-`angular-testing` the spec delta. The set picks a side in two places —
+`angular-testing` the spec delta. Comment rules are not front-end only, so they
+live in `code-comments`, which the front-end and .NET skills point to. The set
+picks a side in two places —
 `async/await` over single-value Observables, and **Vitest as the standard
 runner** (a repo on Jest/Jasmine/Karma gets migrated, not extended;
 `angular-testing/references/migrate-to-vitest.md` carries the API mapping).

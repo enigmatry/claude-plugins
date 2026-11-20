@@ -5,9 +5,9 @@ description: Framework-agnostic TypeScript conventions for codebases on TypeScri
 
 # TypeScript
 
-> Read `frontend-foundations` first — it owns comments, naming policy, code
-> shape, file organization, failure handling, never-silence-a-signal, security
-> and generated code. This file carries the TypeScript delta.
+> Read `frontend-foundations` first — it owns naming policy, code shape, file
+> organization, failure handling, never-silence-a-signal, security and generated
+> code; `code-comments` owns comments. This file carries the TypeScript delta.
 
 **Scope: the language, nothing above it.** Everything here holds in a Node
 service, a build script or a plain browser bundle as much as in an Angular app.

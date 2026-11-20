@@ -1,6 +1,6 @@
 ---
 name: frontend-code-review
-description: Review harness for front-end code — which skill to load for which file type, severity tiers, a scan order, the comment format, and an explicit list of what not to flag. Use this whenever asked to review or code-review Angular, TypeScript, HTML or SCSS code, whether a pull request, a diff, a branch or files named in the request. It provides the process only; the rules being checked live in frontend-foundations, typescript, angular, frontend-styling, angular-testing, generating-e2e-tests and a11y.
+description: Review harness for front-end code — which skill to load for which file type, severity tiers, a scan order, the comment format, and an explicit list of what not to flag. Use this whenever asked to review or code-review Angular, TypeScript, HTML or SCSS code, whether a pull request, a diff, a branch or files named in the request. It provides the process only; the rules being checked live in frontend-foundations, code-comments, typescript, angular, frontend-styling, angular-testing, generating-e2e-tests and a11y.
 ---
 
 # Front-End Code Review
@@ -15,7 +15,7 @@ without them checks nothing but what you remember.
 
 | Diff touches | Load |
 |---|---|
-| anything | `frontend-foundations` |
+| anything | `frontend-foundations`, `code-comments` |
 | `.ts` | `typescript` |
 | components, services, directives, pipes, interceptors, guards, resolvers, templates | `angular` |
 | `.html`, `.scss` | `frontend-styling` |
@@ -86,7 +86,8 @@ Check each step against the loaded skill, not from memory.
    are they deterministic? Judge an e2e spec by `generating-e2e-tests`, not
    `angular-testing` — its run-unique randomized keys, suite layout and timeout
    literals are required there, not findings.
-10. **Leftovers** — commented-out code, `TODO` with no ticket, debug logging,
+10. **Leftovers** — a comment `code-comments` does not allow (config files
+    included), commented-out code, `TODO` with no ticket, debug logging,
     unused imports, hand-edits to generated files.
 
 ## Review principles
